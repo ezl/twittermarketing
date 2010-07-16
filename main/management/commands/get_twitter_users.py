@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time
 import random
 from ipshell import ipshell
 import pdb
@@ -23,6 +24,18 @@ def likely_human(s):
     is_retweet = s.text[:2] == "RT"
     to_someone = s.to_user_id
     return good_source or to_someone or is_retweet
+
+def twitter_unavailable(reason):
+    if "status code = 503" in reason:
+        return True
+    else:
+        return False
+
+def busted_rate_limit(reason):
+    if "Rate limit exceeded" in reason:
+        return True
+    else:
+        return False
 
 class Command(NoArgsCommand):
     help = 'Find some followers'
@@ -80,7 +93,7 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 50     # number of statuses to retrieve per query
+        n = 10     # number of statuses to retrieve per query
         search_dict = dict()
         search_dict['lang'] = "en"
         # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
@@ -94,7 +107,6 @@ class Command(NoArgsCommand):
             results = [c for c in Cursor(api.search, **search_dict).items(n)]
             print "    - %s: %s hits" % (q, len(results))
             statuses.extend(results)
-        print
 
         # find the likely human candidates
         # people talking to one another. get recipients.
@@ -112,7 +124,26 @@ class Command(NoArgsCommand):
 
         # TODO exhaust the free first, then move to the real.
         # dump to followqueue, add users from followqueue isntead of list
-        twitter_users = [api.get_user(u) for u in twitter_usernames]
+        twitter_users = []
+        for u in twitter_usernames:
+            try:
+                twitter_users.append(api.get_user(u))
+            except Exception, e:
+                if twitter_unavailable(e.reason):
+                    print "twitter overloaded"
+                    time.sleep(2)
+                elif busted_rate_limit(e.reason):
+                    print "%s rate limit hits remaining " % \
+                            api.rate_limit_status["remaining_hits"]
+                    print "RATE LIMIT EXCEEDED"
+                    raise Exception
+                elif "Not found" in e.reason:
+                    print "skipping %s" % u
+                else:
+                    # no idea whats going on
+                    pdb.set_trace()
+                    ipshell()
+
         twitter_ids = [u.id for u in twitter_users]
 
         print "  - likely human: %s/%s " % (len(twitter_ids), n * len(queries))
@@ -124,6 +155,7 @@ class Command(NoArgsCommand):
                                  twitter_ids)
         print "  - new humans: %s" % len(new_twitter_ids)
         newly_followed = 0
+        print "[Start following some dudesicles]"
         for twitter_id in new_twitter_ids:
             try:
                 api.create_friendship(twitter_id)
@@ -138,5 +170,7 @@ class Command(NoArgsCommand):
                     print "    - Followed: %s" % t.screen_name
                 except Exception, e:
                     print "Error Saving"
-        print "  - [Batch followed: %s]" % newly_followed
+        print "  - Batch followed: %s" % newly_followed
+        queue_size = FollowQueue.objects.all().count()
+        print "  - Dudesicles waiting to be followed: %s" % queue_size
 
