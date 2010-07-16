@@ -44,10 +44,11 @@ class Command(NoArgsCommand):
         print "  - New followers: %s" % new_followers.count()
         # send any new followers a message
         for new_follower in new_followers:
-            # send @user spam sparingly
             new_follower.following_me = True
             new_follower.save()
-            if random.randint(1, 16) == 11:
+            # don't want to seem to spammy by @username tweeting everyone.
+            # send @username spam sparingly, usually send DM
+            if random.randint(1, 6) == 3:
                 status_message = random.sample(status_messages, 1)[0]
                 api.update_status("@%s %s" (new_follower.screen_name,
                                             status_message))
@@ -59,9 +60,9 @@ class Command(NoArgsCommand):
                 print "    - Sent DM to: %s" % new_follower.screen_name
 
     def prune_losers(self):
+        reciprocation_window = 24 * 3 # hours
         print "[Prune losers]"
         # check to see if people i followed follow me back
-        reciprocation_window = 24 * 3 # hours
         cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
         unchecked = TwitterUser.objects.filter(checked_for_reciprocation=False,
                                                followed_on__lt=cutoff_time)
