@@ -80,7 +80,7 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 20     # number of statuses to retrieve per query
+        n = 50     # number of statuses to retrieve per query
         search_dict = dict()
         search_dict['lang'] = "en"
         # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
@@ -92,7 +92,7 @@ class Command(NoArgsCommand):
         for q in queries:
             search_dict['q'] = q
             results = [c for c in Cursor(api.search, **search_dict).items(n)]
-            print "    - %s: %s hits" % (q, len(results)),
+            print "    - %s: %s hits" % (q, len(results))
             statuses.extend(results)
         print
 
@@ -110,7 +110,9 @@ class Command(NoArgsCommand):
         if len(twitter_usernames) > 120:
             twitter_usernames = twitter_usernames[:120]
 
-        twitter_users = [free_api.get_user(u) for u in twitter_usernames]
+        # TODO exhaust the free first, then move to the real.
+        # dump to followqueue, add users from followqueue isntead of list
+        twitter_users = [api.get_user(u) for u in twitter_usernames]
         twitter_ids = [u.id for u in twitter_users]
 
         print "  - likely human: %s/%s " % (len(twitter_ids), n * len(queries))
