@@ -88,7 +88,7 @@ class Command(NoArgsCommand):
         statuses = list()
         queries = ["$GOOG", "$AAPL", "$TSLA", "$MSFT", "$GS", "$MS",
                    "Berkshire Hathaway", "$HQ", "$INTC", "$CSCO"]
-            print "  - query:"
+        print "  - query:"
         for q in queries:
             search_dict['q'] = q
             results = [c for c in Cursor(api.search, **search_dict).items(n)]
