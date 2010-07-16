@@ -113,7 +113,7 @@ class Command(NoArgsCommand):
         previously_followed = [i.twitter_id for i in
                   TwitterUser.objects.filter(twitter_id__in=twitter_ids)]
         new_twitter_ids = filter(lambda x: not x in previously_followed, twitter_ids)
-
+        print "  - new humans: %s" % (len(new_twitter_ids), n)
         newly_followed = 0
         for twitter_id in new_twitter_ids:
             try:
