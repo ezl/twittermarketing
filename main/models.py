@@ -15,4 +15,4 @@ class TwitterUser(models.Model):
 
 class FollowQueue(models.Model):
     """List of people to follow"""
-    twitter_id = models.IntegerField()
+    screen_name = models.CharField(max_length=100)
