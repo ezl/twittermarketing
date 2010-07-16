@@ -1,0 +1,13 @@
+import tweepy
+from tweepy import TweepError
+
+CONSUMER_KEY = 'xMGEMdG8sMtE6AY4w2DOQ'
+CONSUMER_SECRET = 'tWYRfISLf5khOIlyWw9eArWhf8JiL7YB2eQMd8hfC44'
+
+ACCESS_KEY = '165426141-FONy3up9OtUY1IWDvXfgUjKhHL319AlFKozHCLoI'
+ACCESS_SECRET = 'M9UkYWsKaIjT6aTCFvNPIjXo9FBcFy7NQvJiyGPDKo'
+
+auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+api = tweepy.API(auth)
+
