@@ -1,4 +1,4 @@
-direct_messages = ["Hey there. I'm buildign http://www.quotesentinel.com/beta, which sends custom alerts on stocks you follow.  I'd love some feedback.",
+direct_messages = ["Hi! I'm buildign http://www.quotesentinel.com/beta, which sends custom alerts on stocks you follow.  I'd love some feedback.",
                   ]
 status_messages = ["Tired of missing opportunities when you're not watching the market?  Quote Sentinel watches for you and sends you alerts!",
                    "Use Quote Sentinel to monitor your investments.  Receive text/email notifications when stocks your watching move.",
