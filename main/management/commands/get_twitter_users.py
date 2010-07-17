@@ -93,14 +93,14 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 10     # number of statuses to retrieve per query
+        n = 75     # number of statuses to retrieve per query
         search_dict = dict()
         search_dict['lang'] = "en"
         # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
 
         statuses = list()
         queries = ["$GOOG", "$AAPL", "$TSLA", "$MSFT", "$GS", "$MS",
-                   "Berkshire Hathaway", "$HQ", "$INTC", "$CSCO"]
+                   "Berkshire Hathaway", "$XLF", "$INTC", "$CSCO"]
         print "  - query:"
         for q in queries:
             search_dict['q'] = q
@@ -116,6 +116,12 @@ class Command(NoArgsCommand):
         twitter_usernames.extend([s.from_user for s in
                                   filter(likely_human, statuses)])
         twitter_usernames = list(set(twitter_usernames))
+        twitter_usernames = [u.lower() for u in twitter_usernames]
+        # only follow new people
+        previously_followed = [i.screen_name for i in
+                               TwitterUser.objects.filter(screen_name__in=twitter_usernames)]
+        twitter_usernames = filter(lambda x: not x in previously_followed,
+                                       twitter_usernames)
 
         # TODO: store these into a list of followers to follow next time
         # arbitrarily chose 120
@@ -128,11 +134,11 @@ class Command(NoArgsCommand):
         for u in twitter_usernames:
             try:
                 twitter_users.append(api.get_user(u))
-            except Exception, e:
-                if twitter_unavailable(e.reason):
+            except TweepError, e:
+                if twitter_unavailable(e):
                     print "twitter overloaded"
                     time.sleep(2)
-                elif busted_rate_limit(e.reason):
+                elif busted_rate_limit(e):
                     print "%s rate limit hits remaining " % \
                             api.rate_limit_status["remaining_hits"]
                     print "RATE LIMIT EXCEEDED"
@@ -141,35 +147,38 @@ class Command(NoArgsCommand):
                     print "skipping %s" % u
                 else:
                     # no idea whats going on
+                    print "DEBUG THIS BIZATCH"
                     pdb.set_trace()
                     ipshell()
 
-        twitter_ids = [u.id for u in twitter_users]
+        print "  - likely human: %s/%s " % (len(twitter_users), n * len(queries))
 
-        print "  - likely human: %s/%s " % (len(twitter_ids), n * len(queries))
-
-        # only follow new people
-        previously_followed = [i.twitter_id for i in
-                  TwitterUser.objects.filter(twitter_id__in=twitter_ids)]
-        new_twitter_ids = filter(lambda x: not x in previously_followed,
-                                 twitter_ids)
-        print "  - new humans: %s" % len(new_twitter_ids)
         newly_followed = 0
         print "[Start following some dudesicles]"
-        for twitter_id in new_twitter_ids:
+        for twitter_user in twitter_users:
             try:
-                api.create_friendship(twitter_id)
+                api.create_friendship(twitter_user.id)
             except TweepError, e:
-                print "Skipping id %s. TweepError: %s" % (twitter_id, e)
-            else:
-                t = TwitterUser(twitter_id=twitter_id)
-                try:
-                    t.screen_name = api.get_user(user_id=twitter_id).screen_name
-                    t.save()
-                    newly_followed += 1
-                    print "    - Followed: %s" % t.screen_name
-                except Exception, e:
-                    print "Error Saving"
+                if busted_rate_limit(e.reason):
+                    print "RATE LIMIT EXCEEDED"
+                    raise Exception
+                elif "already on your list" in e:
+                    print "updating internal record", e
+                    twitter_user.id
+                    print
+                    pass
+                else:
+                    print "Skip %s. TweepError: %s" % (twitter_user.screen_name, e)
+                    ipshell()
+                    continue
+            try:
+                t = TwitterUser(twitter_id=twitter_user.id,
+                                screen_name=twitter_user.screen_name.lower())
+                t.save()
+                newly_followed += 1
+                print "    - Followed: %s" % t.screen_name
+            except Exception, e:
+                print "Error Saving"
         print "  - Batch followed: %s" % newly_followed
         queue_size = FollowQueue.objects.all().count()
         print "  - Dudesicles waiting to be followed: %s" % queue_size
