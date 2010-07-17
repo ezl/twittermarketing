@@ -47,6 +47,8 @@ class Command(NoArgsCommand):
         self.contact_new_followers()
         self.prune_losers()
         self.find_new_followers()
+        print "friends: %s, followers %s" % (self.me.friends_count,
+                                             self.me.followers_count)
 
     def contact_new_followers(self):
         # check for new followers
