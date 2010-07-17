@@ -6,3 +6,4 @@ django-extensions==0.5
 ipython==0.10
 tweepy==1.7.1
 wsgiref==0.1.2
+pycheddar==0.9.3
