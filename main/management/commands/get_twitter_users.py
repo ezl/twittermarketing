@@ -47,6 +47,7 @@ class Command(NoArgsCommand):
         self.contact_new_followers()
         self.prune_losers()
         self.find_new_followers()
+        self.me = api.me()
         print "friends: %s, followers %s" % (self.me.friends_count,
                                              self.me.followers_count)
 
@@ -65,7 +66,7 @@ class Command(NoArgsCommand):
             # send @username spam sparingly, usually send DM
             if random.randint(1, 6) == 3:
                 status_message = random.sample(status_messages, 1)[0]
-                api.update_status("@%s %s" (new_follower.screen_name,
+                api.update_status("@%s %s" (new_follower.screen_name, \
                                             status_message))
                 print "    - Updated status to: %s" % new_follower.screen_name
             else:
@@ -95,7 +96,7 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 75     # number of statuses to retrieve per query
+        n = 200     # number of statuses to retrieve per query
         search_dict = dict()
         search_dict['lang'] = "en"
         # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
