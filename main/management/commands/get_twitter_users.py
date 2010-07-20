@@ -82,6 +82,9 @@ class Command(NoArgsCommand):
         cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
         unchecked = TwitterUser.objects.filter(checked_for_reciprocation=False,
                                                followed_on__lt=cutoff_time)
+        for u in unchecked:
+            u.checked_for_reciprocation = True
+            u.save()
         print "  - Checking %s users for recent follow" % unchecked.count()
         losers = unchecked.filter(following_me=False)
         print "  - Reciprocated follow: %s" % (unchecked.count()-losers.count())
@@ -96,14 +99,15 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 200     # number of statuses to retrieve per query
+        n = 100     # number of statuses to retrieve per query
         search_dict = dict()
         search_dict['lang'] = "en"
         # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
 
         statuses = list()
         queries = ["$GOOG", "$AAPL", "$TSLA", "$MSFT", "$GS", "$MS",
-                   "Berkshire Hathaway", "$XLF", "$INTC", "$CSCO"]
+                   "Berkshire Hathaway", "$XLF", "$INTC", "$CSCO",
+                  "$SPY",  "$DIA", "$IWM", "$EEM", "$GLD", "$QQQQ", ]
         print "  - query:"
         for q in queries:
             search_dict['q'] = q
@@ -138,6 +142,9 @@ class Command(NoArgsCommand):
             try:
                 twitter_users.append(api.get_user(u))
             except TweepError, e:
+                "dumb dumb dumb"
+                print "e: %s" % e
+                print "e.reason: %s" % e.reason
                 if twitter_unavailable(e):
                     print "twitter overloaded"
                     time.sleep(2)
@@ -165,14 +172,15 @@ class Command(NoArgsCommand):
                 if busted_rate_limit(e.reason):
                     print "RATE LIMIT EXCEEDED"
                     raise Exception
-                elif "already on your list" in e:
+                elif "already on your list" in e.reason:
                     print "updating internal record", e
                     twitter_user.id
                     print
                     pass
                 else:
                     print "Skip %s. TweepError: %s" % (twitter_user.screen_name, e)
-                    ipshell()
+                    print "DEBUG THIS. WTF is GOING ON?"
+                    #ipshell()
                     continue
             try:
                 t = TwitterUser(twitter_id=twitter_user.id,
