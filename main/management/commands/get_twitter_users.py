@@ -64,10 +64,10 @@ class Command(NoArgsCommand):
             new_follower.save()
             # don't want to seem to spammy by @username tweeting everyone.
             # send @username spam sparingly, usually send DM
-            if random.randint(1, 6) == 3:
+            if random.randint(1, 30) == 10:
                 status_message = random.sample(status_messages, 1)[0]
-                api.update_status("@%s %s" (new_follower.screen_name, \
-                                            status_message))
+                api.update_status("@%s %s" % (new_follower.screen_name, \
+                                              status_message))
                 print "    - Updated status to: %s" % new_follower.screen_name
             else:
                 direct_message = random.sample(direct_messages, 1)[0]
@@ -91,10 +91,12 @@ class Command(NoArgsCommand):
         print "  - Losers: %s" % losers.count()
         for loser in losers:
             loser.checked_for_reciprocation = True
+            # those ingrates!
             loser.save()
             try:
                 api.destroy_friendship(loser)
             except TweepError, e:
+                # probably not friends with them already
                 print "TweepError: %s: %s" % (loser.screen_name, e)
 
     def find_new_followers(self):
