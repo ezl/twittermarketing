@@ -8,12 +8,8 @@ from django.conf import settings
 from django.core.management.base import NoArgsCommand
 from main.models import TwitterUser, FollowQueue
 
-from tweet import api
-from tweepy import TweepError, Cursor, API
-
-from messages import direct_messages, status_messages
-
-free_api = API()
+from tms import api, free_api, direct_messages, status_messages, hits_per_query, queries, geocode
+from tweepy import TweepError, Cursor
 
 def likely_human(s):
     good_source_list = [u'web', 'Twitter for iPhone',
@@ -101,15 +97,12 @@ class Command(NoArgsCommand):
 
     def find_new_followers(self):
         print "[Find new followers]"
-        n = 100     # number of statuses to retrieve per query
+        n = hits_per_query
         search_dict = dict()
         search_dict['lang'] = "en"
-        # search_dict['geocode'] = "41.877630,-87.624389,35mi" # chicago
-
+        if not geocode is None:
+            search_dict['geocode'] = geocode
         statuses = list()
-        queries = ["$GOOG", "$AAPL", "$TSLA", "$MSFT", "$GS", "$MS",
-                   "Berkshire Hathaway", "$XLF", "$INTC", "$CSCO",
-                  "$SPY",  "$DIA", "$IWM", "$EEM", "$GLD", "$QQQQ", ]
         print "  - query:"
         for q in queries:
             search_dict['q'] = q
