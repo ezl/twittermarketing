@@ -31,7 +31,7 @@ def twitter_unavailable(reason):
 def busted_rate_limit(reason):
     if "Rate limit exceeded" in reason:
         print "%s rate limit hits remaining " % \
-                api.rate_limit_status["remaining_hits"]
+                api.rate_limit_status()["remaining_hits"]
         print "RATE LIMIT EXCEEDED"
         return True
     else:
@@ -63,7 +63,6 @@ class Command(NoArgsCommand):
                 # TODO: error handling should be moved out. DRY.
                 except TweepError, e:
                     # TODO: check for rate limit status intelligently
-                    raise Exception
                     "dumb dumb dumb"
                     if twitter_unavailable(e.reason):
                         time.sleep(2)
@@ -75,7 +74,7 @@ class Command(NoArgsCommand):
                     t = TwitterUser(twitter_id=twitter_user.id,
                                     screen_name=twitter_user.screen_name.lower())
                     t.save()
-                    print "added previously untracked: %s" % t.screen_name
+                    print "  - added previously untracked: %s" % t.screen_name
 
     def contact_new_followers(self):
         # check for new followers
