@@ -189,10 +189,7 @@ class Command(NoArgsCommand):
                 elif busted_rate_limit(e.reason):
                     raise Exception
                 elif "already on your list" in e.reason:
-                    print "updating internal record", e
-                    twitter_user.id
-                    print
-                    pass
+                    continue
                 else:
                     print "Skip %s. TweepError: %s" % (twitter_user.screen_name, e)
                     print "DEBUG THIS. WTF is GOING ON?"
