@@ -40,12 +40,44 @@ class Command(NoArgsCommand):
         print "* " * 20
         print "Starting cycle: %s" % datetime.now()
         self.me = api.me()
+        self.add_untracked_users()
         self.contact_new_followers()
         self.prune_losers()
         self.find_new_followers()
         self.me = api.me()
         print "friends: %s, followers %s" % (self.me.friends_count,
                                              self.me.followers_count)
+
+    def add_untracked_users(self):
+        print "ooga booga"
+        friends_ids = api.friends_ids()
+        tracked_friends = TwitterUser.objects.filter(twitter_id__in=friends_ids)
+        tracked_friends_ids = [t.twitter_id for t in tracked_friends]
+        untracked_friends_ids = filter(lambda x: x not in tracked_friends_ids,
+                                   friends_ids)
+        counter = 0
+        for friend_id in untracked_friends_ids:
+            try:
+                twitter_user = api.get_user(user_id=friend_id)
+            # TODO: error handling should be moved out. DRY.
+            except TweepError, e:
+                "dumb dumb dumb"
+                print "e: %s" % e
+                print "e.reason: %s" % e.reason
+                if twitter_unavailable(e):
+                    print "twitter overloaded"
+                    time.sleep(2)
+                elif busted_rate_limit(e):
+                    print "%s rate limit hits remaining " % \
+                            api.rate_limit_status["remaining_hits"]
+                    print "RATE LIMIT EXCEEDED"
+                    raise Exception
+                else:
+                    pass
+            else:
+                t = TwitterUser(twitter_id=twitter_user.id,
+                                screen_name=twitter_user.screen_name.lower())
+                t.save()
 
     def contact_new_followers(self):
         # check for new followers
