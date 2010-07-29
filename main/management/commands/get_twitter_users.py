@@ -49,35 +49,33 @@ class Command(NoArgsCommand):
                                              self.me.followers_count)
 
     def add_untracked_users(self):
-        print "ooga booga"
+        print "[Check for untracked users]"
         friends_ids = api.friends_ids()
-        tracked_friends = TwitterUser.objects.filter(twitter_id__in=friends_ids)
-        tracked_friends_ids = [t.twitter_id for t in tracked_friends]
-        untracked_friends_ids = filter(lambda x: x not in tracked_friends_ids,
-                                   friends_ids)
-        counter = 0
-        for friend_id in untracked_friends_ids:
-            try:
-                twitter_user = api.get_user(user_id=friend_id)
-            # TODO: error handling should be moved out. DRY.
-            except TweepError, e:
-                "dumb dumb dumb"
-                print "e: %s" % e
-                print "e.reason: %s" % e.reason
-                if twitter_unavailable(e):
-                    print "twitter overloaded"
-                    time.sleep(2)
-                elif busted_rate_limit(e):
-                    print "%s rate limit hits remaining " % \
-                            api.rate_limit_status["remaining_hits"]
-                    print "RATE LIMIT EXCEEDED"
-                    raise Exception
+        for friend_id in friends_ids:
+            tracked = TwitterUser.objects.filter(twitter_id=friend_id).count()
+            if not tracked:
+                try:
+                    twitter_user = api.get_user(user_id=friend_id)
+                # TODO: error handling should be moved out. DRY.
+                except TweepError, e:
+                    "dumb dumb dumb"
+                    print "e: %s" % e
+                    print "e.reason: %s" % e.reason
+                    if twitter_unavailable(e):
+                        print "twitter overloaded"
+                        time.sleep(2)
+                    elif busted_rate_limit(e):
+                        print "%s rate limit hits remaining " % \
+                                api.rate_limit_status["remaining_hits"]
+                        print "RATE LIMIT EXCEEDED"
+                        raise Exception
+                    else:
+                        pass
                 else:
-                    pass
-            else:
-                t = TwitterUser(twitter_id=twitter_user.id,
-                                screen_name=twitter_user.screen_name.lower())
-                t.save()
+                    t = TwitterUser(twitter_id=twitter_user.id,
+                                    screen_name=twitter_user.screen_name.lower())
+                    t.save()
+                    print "added previously untracked: %s" % t.screen_name
 
     def contact_new_followers(self):
         # check for new followers
