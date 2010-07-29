@@ -27,6 +27,15 @@ class Command(NoArgsCommand):
                                              self.me.followers_count)
 
     def add_untracked_users(self):
+        """ Add previously untracked users
+
+            If user is manually followed through the twitter website,
+            twittermarketing app doesn't know that a relationship exists.
+
+            This method adds untracked users to our repository so we know
+            not to refollow them and we won't multiple message them.
+        """
+
         print "[Check for untracked users]"
         friends_ids = api.friends_ids()
         for friend_id in friends_ids:
@@ -34,15 +43,13 @@ class Command(NoArgsCommand):
             if not tracked:
                 try:
                     twitter_user = api.get_user(user_id=friend_id)
-                # TODO: error handling should be moved out. DRY.
                 except TweepError, e:
-                    # TODO: check for rate limit status intelligently
                     if twitter_unavailable(e.reason):
                         time.sleep(2)
                     elif busted_rate_limit(e.reason):
                         raise Exception
                     else:
-                        pass
+                        print "Error: %s" % e.reason
                 else:
                     t = TwitterUser(twitter_id=twitter_user.id,
                                     screen_name=twitter_user.screen_name.lower())
@@ -50,7 +57,12 @@ class Command(NoArgsCommand):
                     print "  - added previously untracked: %s" % t.screen_name
 
     def contact_new_followers(self):
-        # check for new followers
+        """ Check for new followers
+
+            See if any new people are following us since the last check.
+            If so, reach out to them via DM or @reply
+        """
+
         print "[Check for new followers]"
         followers_ids = api.followers_ids(self.me.id)
         new_followers = TwitterUser.objects.filter(twitter_id__in=followers_ids,
@@ -74,6 +86,14 @@ class Command(NoArgsCommand):
                 print "    - Sent DM to: %s" % new_follower.screen_name
 
     def prune_losers(self):
+        """Unfollow people who are uninterested in following us.
+
+           When a user is followed by twittermarketing, they are added to a list
+           of users we are following.  If after tms.reciprocation_window hours
+           have elapsed that user hasn't followed us back, unfollow them to
+           make room for more people for us to follow.
+        """
+
         print "[Prune losers]"
         # check to see if people i followed follow me back
         cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
@@ -97,6 +117,14 @@ class Command(NoArgsCommand):
                 print "TweepError: %s: %s" % (loser.screen_name, e)
 
     def find_new_followers(self):
+        """Find new followers.
+
+           Using search queries defined in tms.py find new followers.
+           Do naive filtering to see if we think they are worth following.
+           Make sure we haven't previously followed them.
+           Follow anyone who passes through, then add them to our list.
+        """
+
         print "[Find new followers]"
         n = hits_per_query
         search_dict = dict()
@@ -110,11 +138,9 @@ class Command(NoArgsCommand):
             results = [c for c in Cursor(api.search, **search_dict).items(n)]
             print "    - %s: %s hits" % (q, len(results))
             statuses.extend(results)
-
         # find the likely human candidates
         # people talking to one another. get recipients.
         twitter_usernames = [s.to_user for s in statuses if s.to_user_id]
-
         # from a likely to be "normal human" source
         twitter_usernames.extend([s.from_user for s in
                                   filter(likely_human, statuses)])
@@ -127,7 +153,9 @@ class Command(NoArgsCommand):
                                        twitter_usernames)
 
         # TODO: store these into a list of followers to follow next time
-        # arbitrarily chose 120
+        # right way to do this is to put everyone in a queue in case too many
+        # candidates are received. Then we can follow them on the next cron
+        # instead, i'm lazy and arbitrarily chose 120 people to follow
         if len(twitter_usernames) > 120:
             twitter_usernames = twitter_usernames[:120]
 
@@ -149,14 +177,16 @@ class Command(NoArgsCommand):
 
         print "  - likely human: %s/%s " % (len(twitter_users), n * len(queries))
 
+        # actually start following those dudesicles
         newly_followed = 0
         print "[Start following some dudesicles]"
         for twitter_user in twitter_users:
             try:
                 api.create_friendship(twitter_user.id)
             except TweepError, e:
-                if busted_rate_limit(e.reason):
-                    print "RATE LIMIT EXCEEDED"
+                if twitter_unavailable(e.reason):
+                    time.sleep(2)
+                elif busted_rate_limit(e.reason):
                     raise Exception
                 elif "already on your list" in e.reason:
                     print "updating internal record", e
@@ -166,7 +196,7 @@ class Command(NoArgsCommand):
                 else:
                     print "Skip %s. TweepError: %s" % (twitter_user.screen_name, e)
                     print "DEBUG THIS. WTF is GOING ON?"
-                    #ipshell()
+                    # ipshell()
                     continue
             try:
                 t = TwitterUser(twitter_id=twitter_user.id,
