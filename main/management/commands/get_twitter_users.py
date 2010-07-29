@@ -23,12 +23,16 @@ def likely_human(s):
 
 def twitter_unavailable(reason):
     if "status code = 503" in reason:
+        print "twitter overloaded"
         return True
     else:
         return False
 
 def busted_rate_limit(reason):
     if "Rate limit exceeded" in reason:
+        print "%s rate limit hits remaining " % \
+                api.rate_limit_status["remaining_hits"]
+        print "RATE LIMIT EXCEEDED"
         return True
     else:
         return False
@@ -58,16 +62,12 @@ class Command(NoArgsCommand):
                     twitter_user = api.get_user(user_id=friend_id)
                 # TODO: error handling should be moved out. DRY.
                 except TweepError, e:
+                    # TODO: check for rate limit status intelligently
+                    raise Exception
                     "dumb dumb dumb"
-                    print "e: %s" % e
-                    print "e.reason: %s" % e.reason
-                    if twitter_unavailable(e):
-                        print "twitter overloaded"
+                    if twitter_unavailable(e.reason):
                         time.sleep(2)
-                    elif busted_rate_limit(e):
-                        print "%s rate limit hits remaining " % \
-                                api.rate_limit_status["remaining_hits"]
-                        print "RATE LIMIT EXCEEDED"
+                    elif busted_rate_limit(e.reason):
                         raise Exception
                     else:
                         pass
@@ -168,15 +168,9 @@ class Command(NoArgsCommand):
                 twitter_users.append(api.get_user(u))
             except TweepError, e:
                 "dumb dumb dumb"
-                print "e: %s" % e
-                print "e.reason: %s" % e.reason
-                if twitter_unavailable(e):
-                    print "twitter overloaded"
+                if twitter_unavailable(e.reason):
                     time.sleep(2)
-                elif busted_rate_limit(e):
-                    print "%s rate limit hits remaining " % \
-                            api.rate_limit_status["remaining_hits"]
-                    print "RATE LIMIT EXCEEDED"
+                elif busted_rate_limit(e.reason):
                     raise Exception
                 elif "Not found" in e.reason:
                     print "skipping %s" % u
