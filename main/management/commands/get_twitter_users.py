@@ -11,32 +11,6 @@ from main.models import TwitterUser, FollowQueue
 from tms import api, free_api, direct_messages, status_messages, hits_per_query, queries, geocode
 from tweepy import TweepError, Cursor
 
-def likely_human(s):
-    good_source_list = [u'web', 'Twitter for iPhone',
-                        u'Tweetie for Mac',  u'Twitterrific',
-                        u'StockTwits Web', u'StockTwits Desktop',
-                        u'StockCharts.com', "Echofon", "Facebook"]
-    good_source = s.source in good_source_list
-    is_retweet = s.text[:2] == "RT"
-    to_someone = s.to_user_id
-    return good_source or to_someone or is_retweet
-
-def twitter_unavailable(reason):
-    if "status code = 503" in reason:
-        print "twitter overloaded"
-        return True
-    else:
-        return False
-
-def busted_rate_limit(reason):
-    if "Rate limit exceeded" in reason:
-        print "%s rate limit hits remaining " % \
-                api.rate_limit_status()["remaining_hits"]
-        print "RATE LIMIT EXCEEDED"
-        return True
-    else:
-        return False
-
 class Command(NoArgsCommand):
     help = 'Find some followers'
 
@@ -211,4 +185,30 @@ class Command(NoArgsCommand):
         print "  - Batch followed: %s" % newly_followed
         queue_size = FollowQueue.objects.all().count()
         print "  - Dudesicles waiting to be followed: %s" % queue_size
+
+def likely_human(s):
+    good_source_list = [u'web', 'Twitter for iPhone',
+                        u'Tweetie for Mac',  u'Twitterrific',
+                        u'StockTwits Web', u'StockTwits Desktop',
+                        u'StockCharts.com', "Echofon", "Facebook"]
+    good_source = s.source in good_source_list
+    is_retweet = s.text[:2] == "RT"
+    to_someone = s.to_user_id
+    return good_source or to_someone or is_retweet
+
+def twitter_unavailable(reason):
+    if "status code = 503" in reason:
+        print "twitter overloaded"
+        return True
+    else:
+        return False
+
+def busted_rate_limit(reason):
+    if "Rate limit exceeded" in reason:
+        print "%s rate limit hits remaining " % \
+                api.rate_limit_status()["remaining_hits"]
+        print "RATE LIMIT EXCEEDED"
+        return True
+    else:
+        return False
 
