@@ -37,7 +37,6 @@ class Command(NoArgsCommand):
                 # TODO: error handling should be moved out. DRY.
                 except TweepError, e:
                     # TODO: check for rate limit status intelligently
-                    "dumb dumb dumb"
                     if twitter_unavailable(e.reason):
                         time.sleep(2)
                     elif busted_rate_limit(e.reason):
@@ -140,7 +139,6 @@ class Command(NoArgsCommand):
             try:
                 twitter_users.append(api.get_user(u))
             except TweepError, e:
-                "dumb dumb dumb"
                 if twitter_unavailable(e.reason):
                     time.sleep(2)
                 elif busted_rate_limit(e.reason):
@@ -148,10 +146,7 @@ class Command(NoArgsCommand):
                 elif "Not found" in e.reason:
                     print "skipping %s" % u
                 else:
-                    # no idea whats going on
-                    print "DEBUG THIS BIZATCH"
-                    pdb.set_trace()
-                    ipshell()
+                    pass
 
         print "  - likely human: %s/%s " % (len(twitter_users), n * len(queries))
 
