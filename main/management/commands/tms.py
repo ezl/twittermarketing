@@ -13,6 +13,7 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 api = tweepy.API(auth)
 free_api = tweepy.API()
 
+reciprocation_window = 24 * 3 # hours
 direct_messages = ["Hi! I'm buildign http://www.quotesentinel.com/, which sends custom alerts on stocks you follow.  I'd love some feedback.",
                   ]
 status_messages = ["Tired of missing opportunities when you're not watching the market?  Quote Sentinel watches for you and sends you alerts!",

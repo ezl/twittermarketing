@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.management.base import NoArgsCommand
 from main.models import TwitterUser, FollowQueue
 
-from tms import api, free_api, direct_messages, status_messages, hits_per_query, queries, geocode
+from tms import api, free_api, reciprocation_window, direct_messages, status_messages, hits_per_query, queries, geocode
 from tweepy import TweepError, Cursor
 
 class Command(NoArgsCommand):
@@ -74,7 +74,6 @@ class Command(NoArgsCommand):
                 print "    - Sent DM to: %s" % new_follower.screen_name
 
     def prune_losers(self):
-        reciprocation_window = 24 * 3 # hours
         print "[Prune losers]"
         # check to see if people i followed follow me back
         cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
