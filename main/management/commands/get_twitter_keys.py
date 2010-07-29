@@ -1,8 +1,8 @@
 import tweepy
  
-CONSUMER_KEY = 'GLwd7ASEFfRXHYuHAERg'
-CONSUMER_SECRET = '0jcGweCrkzCywLlLFZGoJmRBYU2iYlvhGgnaiA4'
- 
+CONSUMER_KEY = 'xMGEMdG8sMtE6AY4w2DOQ'
+CONSUMER_SECRET = 'tWYRfISLf5khOIlyWw9eArWhf8JiL7YB2eQMd8hfC44'
+
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth_url = auth.get_authorization_url()
 print 'Please authorize: ' + auth_url
