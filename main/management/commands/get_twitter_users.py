@@ -99,9 +99,10 @@ class Command(NoArgsCommand):
         cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
         unchecked = TwitterUser.objects.filter(checked_for_reciprocation=False,
                                                followed_on__lt=cutoff_time)
-        for u in unchecked:
-            u.checked_for_reciprocation = True
-            u.save()
+        winners = unchecked.filter(following_me=True)
+        for w in winners:
+            w.checked_for_reciprocation = True
+            w.save()
         print "  - Checking %s users for recent follow" % unchecked.count()
         losers = unchecked.filter(following_me=False)
         print "  - Reciprocated follow: %s" % (unchecked.count()-losers.count())
@@ -114,7 +115,14 @@ class Command(NoArgsCommand):
                 api.destroy_friendship(loser)
             except TweepError, e:
                 # probably not friends with them already
-                print "TweepError: %s: %s" % (loser.screen_name, e)
+                if twitter_unavailable(e.reason):
+                    time.sleep(2)
+                elif busted_rate_limit(e.reason):
+                    raise Exception
+                else:
+                    print "TweepError: %s: %s" % (loser.screen_name, e)
+            else:
+                print "defriended that ingrate: %s" % loser
 
     def find_new_followers(self):
         """Find new followers.
