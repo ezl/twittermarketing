@@ -1,7 +1,13 @@
-POOP
-
-{{ ctx }}
-{{ var }}
-<a href="{% url login %}">Log in</a>
-<a href="{% url signup %}">Sign up</a>
-</form>
+<hr />
+{% if request.user.is_authenticated %}
+    Hello, {{ request.user.username }}! <a href="{% url logout %}">log out</a>
+{% else %}
+    <a href="{% url login %}">Log in</a>
+    <a href="{% url signup %}">Sign up</a>
+{% endif %}
+<hr />
+blah blah
+blah blah
+blah blah
+blah blah
+<hr />
