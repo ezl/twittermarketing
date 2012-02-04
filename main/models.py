@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
 from django.contrib.auth.models import User
+from django.db.models import signals
 
 
 class TwitterUser(TimeStampedModel):
@@ -15,6 +16,7 @@ class TwitterUser(TimeStampedModel):
     def __unicode__(self):
         return self.screen_name
 
+
 class FollowQueue(TimeStampedModel):
     """List of people to follow"""
     screen_name = models.CharField(max_length=100)
@@ -22,3 +24,11 @@ class FollowQueue(TimeStampedModel):
 
 class UserProfile(TimeStampedModel):
     user = models.OneToOneField(User)
+    twitter_username = models.CharField(max_length=30)
+
+def create_user_profile_on_user_post_save(sender, instance, created, **kwargs):
+    UserProfile.objects.get_or_create(user=instance)
+
+signals.post_save.connect(
+    create_user_profile_on_user_post_save,
+    sender=User)
