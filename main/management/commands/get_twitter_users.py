@@ -1,15 +1,21 @@
 from datetime import datetime, timedelta
 import time
 import random
-from ipshell import ipshell
 import pdb
 
 from django.conf import settings
 from django.core.management.base import NoArgsCommand
 from main.models import TwitterUser, FollowQueue
 
-from tms import api, free_api, reciprocation_window, direct_messages, status_messages, hits_per_query, queries, geocode
+import tweepy
 from tweepy import TweepError, Cursor
+import tms
+from tms import free_api, reciprocation_window, direct_messages, status_messages, hits_per_query, queries, geocode
+
+from tms import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET
+auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+api = tweepy.API(auth)
 
 class Command(NoArgsCommand):
     help = 'Find some followers'
@@ -37,7 +43,7 @@ class Command(NoArgsCommand):
         """
 
         print "[Check for untracked users]"
-        friends_ids = api.friends_ids()
+        friends_ids = api.friends_ids()[0]
         for friend_id in friends_ids:
             tracked = TwitterUser.objects.filter(twitter_id=friend_id).count()
             if not tracked:
@@ -64,7 +70,8 @@ class Command(NoArgsCommand):
         """
 
         print "[Check for new followers]"
-        followers_ids = api.followers_ids(self.me.id)
+        pdb.set_trace()
+        followers_ids = api.followers_ids(self.me.id)[0]
         new_followers = TwitterUser.objects.filter(twitter_id__in=followers_ids,
                                                      following_me=False)
         print "  - New followers: %s" % new_followers.count()

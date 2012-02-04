@@ -1,12 +1,10 @@
 import tweepy
 
-CONSUMER_KEY = 'xMGEMdG8sMtE6AY4w2DOQ'
-CONSUMER_SECRET = 'tWYRfISLf5khOIlyWw9eArWhf8JiL7YB2eQMd8hfC44'
+CONSUMER_KEY = 'zVxVWGT3bIMHrC4th8bJQ'
+CONSUMER_SECRET = 'oc8cYDjOwruMJycfoJcfU4CzrnwiMuapfwABm1k4c'
 
-ACCESS_KEY = '165426141-FONy3up9OtUY1IWDvXfgUjKhHL319AlFKozHCLoI'
-ACCESS_SECRET = 'M9UkYWsKaIjT6aTCFvNPIjXo9FBcFy7NQvJiyGPDKo'
-ACCESS_KEY = '165426141-FONy3up9OtUY1IWDvXfgUjKhHL319AlFKozHCLoI'
-ACCESS_SECRET = 'M9UkYWsKaIjT6aTCFvNPIjXo9FBcFy7NQvJiyGPDKo'
+ACCESS_KEY = '478302262-avByTGHc54v3xQnWddte32JEYdFa9TiF5pQZluYA'
+ACCESS_SECRET = '9mqnKKS1bzxIN8lPzmOQQRItJqW6amJX2jvVqg8zJ9s'
 
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
@@ -14,19 +12,21 @@ api = tweepy.API(auth)
 free_api = tweepy.API()
 
 reciprocation_window = 24 * 2 # hours
-direct_messages = ["Hi! I'm buildign http://www.quotesentinel.com/, which sends custom alerts on stocks you follow.  I'd love some feedback.",
+direct_messages = ["I'd love some feedback.",
                   ]
-status_messages = ["Tired of missing opportunities when you're not watching the market?  Quote Sentinel watches for you and sends you alerts!",
-                   "Use Quote Sentinel to monitor your investments.  Receive text/email notifications when stocks your watching move.",
-                   "Try using Quote Sentinel.  You set price points for your stocks, QS alerts you when the stock trades your price.",
-                   "We originally developed this for ourselves to be able to easily monitor stocks. Would love your feedback!",
-                   "Get custom stock alerts by SMS using http://www.quotesentinel.com.  Hands down the easiest way to monitor your portfolio!",
+status_messages = ["Hello World",
+                   "Hello world",
+                   "Hello world",
+                   "Hello world",
                   ]
 
 hits_per_query = 100 # number of statuses to retrieve per query
-queries = ["$GOOG", "$AAPL", "$TSLA", "$MSFT", "$GS", "$MS",
-           "Berkshire Hathaway", "$XLF", "$INTC", "$CSCO",
-          "$SPY",  "$DIA", "$IWM", "$EEM", "$GLD", "$QQQQ", ]
+queries = ["i had sex last night",
+          "find an apartment",
+          "need to find a tenant",
+          "hate paper applications",
+          "run a credit check",]
 
 # geocode = "41.877630,-87.624389,35mi" # chicago
 geocode = None
+geocode = "25.774252,-80.190262,35mi"
