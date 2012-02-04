@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from django.db import models
+from django_extensions.db.models import TimeStampedModel
+from django.contrib.auth.models import User
 
 
-class TwitterUser(models.Model):
+class TwitterUser(TimeStampedModel):
     """Users I have added"""
     twitter_id = models.IntegerField()
     screen_name = models.CharField(max_length=100)
@@ -13,6 +15,10 @@ class TwitterUser(models.Model):
     def __unicode__(self):
         return self.screen_name
 
-class FollowQueue(models.Model):
+class FollowQueue(TimeStampedModel):
     """List of people to follow"""
     screen_name = models.CharField(max_length=100)
+
+
+class UserProfile(TimeStampedModel):
+    user = models.OneToOneField(User)
