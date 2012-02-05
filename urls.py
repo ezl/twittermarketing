@@ -9,6 +9,8 @@ from main.views import SignUpView, UserProfileView
 
 urlpatterns = patterns('',
     url(r'^$', 'main.views.index', name='index'),
+    url(r'^twitter/signin/$', 'main.views.twitter_signin', name='twitter_signin'),
+    url(r'^twitter/done/$', 'main.views.twitter_done', name='twitter_done'),
     url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
     url(r'^accounts/signup/$', SignUpView.as_view(), name='signup'),
