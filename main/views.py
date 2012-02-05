@@ -2,7 +2,7 @@ from django.views.generic.simple import direct_to_template
 from django.views.generic.edit import CreateView, UpdateView
 from django.core.urlresolvers import reverse
 
-# from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -14,9 +14,11 @@ from models import UserProfile, TwitterAccount, TwitterAccountSnapshot
 def index(request):
     template_name = "index.html"
 
-    ctx = dict(
-        snapshots = TwitterAccountSnapshot.objects.filter(twitter_acount__user=request.user)
-    )
+    if request.user.is_authenticated():
+        snapshots = TwitterAccountSnapshot.objects.filter(twitter_account__user=request.user)
+    else:
+        snapshots = TwitterAccountSnapshot.objects.none()
+    ctx = locals()
     return direct_to_template(request, template_name, ctx)
 
 import tweepy
@@ -25,6 +27,17 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
 
 # Thanks to http://djangosnippets.org/snippets/1353/
+
+@login_required
+def test_tweet(request):
+    request.user.twitteraccount
+    auth = tweepy.OAuthHandler(settings.CONSUMER_KEY,
+                               settings.CONSUMER_SECRET)
+    auth.set_access_token(request.user.twitteraccount.access_key,
+                          request.user.twitteraccount.access_secret)
+    api = tweepy.API(auth)
+    api.update_status("Test")
+    return HttpResponseRedirect("/")
 
 def twitter_done(request):
     token = request.session.get('unauthed_token', None)
@@ -69,11 +82,13 @@ def twitter_done(request):
         )
     # if its freshly created, add more info and save it
     if created:
-        twitter_account.name        = me.name,
-        twitter_account.twitter_id  = me.id,
-        twitter_account.location    = me.location,
-        twitter_account.description = me.description,
-        twitter_account.url         = me.url,
+        twitter_account.access_key    = ACCESS_KEY
+        twitter_account.access_secret = ACCESS_SECRET
+        twitter_account.name          = me.name
+        twitter_account.twitter_id    = me.id
+        twitter_account.location      = me.location
+        twitter_account.description   = me.description
+        twitter_account.url           = me.url
         twitter_account.save()
 
     # Take a snapshot of the account

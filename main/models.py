@@ -27,16 +27,16 @@ class UserProfile(TimeStampedModel):
 
 
 class TwitterAccount(TimeStampedModel):
-    user            = models.ForeignKey(User)
+    user            = models.OneToOneField(User)
     screen_name     = models.CharField(max_length=255, null=True, blank=True)
     name            = models.CharField(max_length=255, null=True, blank=True)
     twitter_id      = models.CharField(max_length=255, null=True, blank=True)
     location        = models.CharField(max_length=255, null=True, blank=True)
     description     = models.CharField(max_length=255, null=True, blank=True)
     url             = models.CharField(max_length=255, null=True, blank=True)
-    followers_count = models.CharField(max_length=255, null=True, blank=True)
-    friends_count   = models.CharField(max_length=255, null=True, blank=True)
-    listed_count    = models.CharField(max_length=255, null=True, blank=True)
+
+    access_key      = models.CharField(max_length=255, null=True, blank=True)
+    access_secret   = models.CharField(max_length=255, null=True, blank=True)
 
 
 class TwitterAccountSnapshot(TimeStampedModel):
