@@ -22,6 +22,8 @@ class FollowQueue(TimeStampedModel):
     screen_name = models.CharField(max_length=100)
 
 
+# NEW STUFF BELOW HERE!
+
 class UserProfile(TimeStampedModel):
     user = models.OneToOneField(User)
 
@@ -44,6 +46,41 @@ class TwitterAccountSnapshot(TimeStampedModel):
     followers_count = models.CharField(max_length=15, null=True, blank=True)
     friends_count   = models.CharField(max_length=15, null=True, blank=True)
     listed_count    = models.CharField(max_length=15, null=True, blank=True)
+
+
+class Target(TimeStampedModel):
+    """These are twitter users that the user has targeted at some point.
+       We keep track of this so we don't repeatedly spam people.
+       There are 2 basic strategies:
+           1. follow people
+           2. tweet at people
+
+       Following people requires that we maintain several states to so we
+       can unfollow them later, otherwise the game will end as soon as we
+       hit 2000 followers.  The "purgatory/follower/ingrate" states refer to
+       this.  The "Contacted" state is used if we're implementing the strategy
+       of tweeting at targets, so we'll only tweet/dm them once each.
+
+       On deck means we haven't yet initiated any contact with them.
+    """
+    ON_DECK   = "Q"
+    PURGATORY = "P"
+    FOLLOWER  = "F"
+    INGRATE   = "I"
+    CONTACTED = "C"
+
+    STATUS_CHOICES = (
+        (ON_DECK,  "User is in the queue to be targeted"),
+        (PURGATORY,"User has been followed by us, now waiting to see if the follow us back"),
+        (FOLLOWER, "User reciprocated follow"),
+        (INGRATE,  "User sucks. We followed them and they didn't follow us. Ingrate!"),
+        (CONTACTED,"We contacted this user by @replying or DMing them."),
+    )
+
+    hunter = models.ForeignKey(User)
+    hunted = models.ForeignKey(TwitterAccount)
+    reason = models.CharField(max_length=255, help_text="Why did we target this user?")
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=ON_DECK)
 
 
 def create_user_profile_on_user_post_save(sender, instance, created, **kwargs):
