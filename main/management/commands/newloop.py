@@ -11,12 +11,12 @@ api = tweepy.API(auth)
 
 queries = [
     "%22looking%20for%20an%20apartment%22",
-    "%22running%20credit%20checks%22",
-    "%22leasing%20agent%22",
-    "%22new%20apartment%22",
-    "%22moving%20out%22",
+    #"%22running%20credit%20checks%22",
+    #"%22leasing%20agent%22",
+    #"%22new%20apartment%22",
+    #"%22moving%20out%22",
     "%22apartment%20application%22",
-    "realtor",
+    #"realtor",
 ]
 
 def find_new_followers():
@@ -55,7 +55,12 @@ def follow_user(user):
     except Exception, e:
         print "Error", e
         return
+    else:
+        record_follow(user)
 
+
+def record_follow(user):
+    """After a successful follow, lets save the record in the db for tracking"""
     try:
         #save the follow?
         #t = TwitterUser(twitter_id=twitter_user.id,
@@ -79,7 +84,7 @@ def lookup_users_by_screen_name(screen_names, n=50):
 
 
 geocode=None
-hits_per_query = 5
+hits_per_query = 2
 statuses = find_new_followers()
 
 screen_names = [t.to_user for t in statuses if t.to_user] + [t.from_user for t in statuses]
@@ -87,8 +92,6 @@ users, remainder = lookup_users_by_screen_name(screen_names)
 
 for user in users:
     follow_user(user)
-
-
 
 
 
