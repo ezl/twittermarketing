@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from forms import UserProfileForm
-from models import UserProfile
+from models import UserProfile, TwitterAccount
 
 
 def index(request):
@@ -45,7 +45,8 @@ def twitter_done(request):
     api = tweepy.API(auth)
     me = api.me()
 
-    twitteruser = dict(
+    twitter_account = TwitterAccount(
+        user            = request.user,
         screen_name     = me.screen_name,
         name            = me.name,
         twitter_id      = me.id,
@@ -56,6 +57,7 @@ def twitter_done(request):
         friends_count   = me.friends_count,
         listed_count    = me.listed_count,
         )
+    twitter_account.save()
     return HttpResponseRedirect("/")
 
 def twitter_signin(request):

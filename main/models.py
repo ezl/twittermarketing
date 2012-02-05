@@ -24,7 +24,20 @@ class FollowQueue(TimeStampedModel):
 
 class UserProfile(TimeStampedModel):
     user = models.OneToOneField(User)
-    twitter_username = models.CharField(max_length=30)
+
+
+class TwitterAccount(TimeStampedModel):
+    user = models.ForeignKey(User)
+    screen_name     = models.CharField(max_length=255, null=True, blank=True)
+    name            = models.CharField(max_length=255, null=True, blank=True)
+    twitter_id      = models.CharField(max_length=255, null=True, blank=True)
+    location        = models.CharField(max_length=255, null=True, blank=True)
+    description     = models.CharField(max_length=255, null=True, blank=True)
+    url             = models.CharField(max_length=255, null=True, blank=True)
+    followers_count = models.CharField(max_length=255, null=True, blank=True)
+    friends_count   = models.CharField(max_length=255, null=True, blank=True)
+    listed_count    = models.CharField(max_length=255, null=True, blank=True)
+
 
 def create_user_profile_on_user_post_save(sender, instance, created, **kwargs):
     UserProfile.objects.get_or_create(user=instance)
