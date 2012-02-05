@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 {% block main %}
-blah blah
-blah blah
-blah blah
-blah blah
+<h1<Snapshots</h1>
+{% for s in snapshots %}
+    <p>
+    {{ s.created }}, 
+    {{ s.twitter_account.screen_name }}, 
+    Folowers:{{ s.followers_count }}, 
+    Friends:{{ s.friends_count }}, 
+    </p>
+{% empty %}
+    No snapshots
+{% endfor %}
 {% endblock %}
 <hr />

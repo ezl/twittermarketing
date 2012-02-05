@@ -27,7 +27,7 @@ class UserProfile(TimeStampedModel):
 
 
 class TwitterAccount(TimeStampedModel):
-    user = models.ForeignKey(User)
+    user            = models.ForeignKey(User)
     screen_name     = models.CharField(max_length=255, null=True, blank=True)
     name            = models.CharField(max_length=255, null=True, blank=True)
     twitter_id      = models.CharField(max_length=255, null=True, blank=True)
@@ -37,6 +37,13 @@ class TwitterAccount(TimeStampedModel):
     followers_count = models.CharField(max_length=255, null=True, blank=True)
     friends_count   = models.CharField(max_length=255, null=True, blank=True)
     listed_count    = models.CharField(max_length=255, null=True, blank=True)
+
+
+class TwitterAccountSnapshot(TimeStampedModel):
+    twitter_account = models.ForeignKey(TwitterAccount)
+    followers_count = models.CharField(max_length=15, null=True, blank=True)
+    friends_count   = models.CharField(max_length=15, null=True, blank=True)
+    listed_count    = models.CharField(max_length=15, null=True, blank=True)
 
 
 def create_user_profile_on_user_post_save(sender, instance, created, **kwargs):
