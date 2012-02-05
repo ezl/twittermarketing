@@ -12,11 +12,23 @@ from models import UserProfile, TwitterAccount, TwitterAccountSnapshot
 from utils import get_or_create_twitter_account
 
 
+def get_user_api(user):
+    if user.is_authenticated():
+        auth = tweepy.OAuthHandler(settings.CONSUMER_KEY,
+                                   settings.CONSUMER_SECRET)
+        auth.set_access_token(user.twitteraccount.access_key,
+                              user.twitteraccount.access_secret)
+        api = tweepy.API(auth)
+    else:
+        api = tweepy.API()
+    return api
+
 def index(request):
     template_name = "index.html"
 
     if request.user.is_authenticated():
         snapshots = TwitterAccountSnapshot.objects.filter(twitter_account__user=request.user)
+        api = get_user_api(request.user)
     else:
         snapshots = TwitterAccountSnapshot.objects.none()
     ctx = locals()
@@ -31,12 +43,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 
 @login_required
 def test_tweet(request):
-    request.user.twitteraccount
-    auth = tweepy.OAuthHandler(settings.CONSUMER_KEY,
-                               settings.CONSUMER_SECRET)
-    auth.set_access_token(request.user.twitteraccount.access_key,
-                          request.user.twitteraccount.access_secret)
-    api = tweepy.API(auth)
+    api = get_user_api(request.user)
     api.update_status("Test")
     return HttpResponseRedirect("/")
 
