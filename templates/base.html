@@ -1,0 +1,13 @@
+<a href="{% url twitter_signin%}">verify twitter account</a>
+{% if request.user.is_authenticated %}
+    Hello, {{ request.user.username }}! 
+    <a href="{% url profile %}">profile</a>
+    <a href="{% url logout %}">log out</a>
+{% else %}
+    <a href="{% url login %}">Log in</a>
+    <a href="{% url signup %}">Sign up</a>
+{% endif %}
+<hr />
+{% block main %}
+{% endblock %}
+
