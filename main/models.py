@@ -29,7 +29,7 @@ class UserProfile(TimeStampedModel):
 
 
 class TwitterAccount(TimeStampedModel):
-    user            = models.OneToOneField(User)
+    user            = models.OneToOneField(User, null=True, blank=True)
     screen_name     = models.CharField(max_length=255, null=True, blank=True)
     name            = models.CharField(max_length=255, null=True, blank=True)
     twitter_id      = models.CharField(max_length=255, null=True, blank=True)

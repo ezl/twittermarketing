@@ -9,6 +9,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from forms import UserProfileForm
 from models import UserProfile, TwitterAccount, TwitterAccountSnapshot
+from utils import get_or_create_twitter_account
 
 
 def index(request):
@@ -75,20 +76,12 @@ def twitter_done(request):
     )
     login(request, user)
 
-    # get the account, or create it if we don't know this person
-    twitter_account, created = TwitterAccount.objects.get_or_create(
-        user        = request.user,
-        screen_name = screen_name,
-        )
-    # if its freshly created, add more info and save it
+    twitter_account, created = get_or_create_twitter_account(me)
+
     if created:
+        twitter_account.user          = request.user
         twitter_account.access_key    = ACCESS_KEY
         twitter_account.access_secret = ACCESS_SECRET
-        twitter_account.name          = me.name
-        twitter_account.twitter_id    = me.id
-        twitter_account.location      = me.location
-        twitter_account.description   = me.description
-        twitter_account.url           = me.url
         twitter_account.save()
 
     # Take a snapshot of the account
