@@ -68,7 +68,7 @@ def twitter_done(request):
 
     # Create an account for this twitter user if we haven't before
     user, created = User.objects.get_or_create(username=screen_name)
-    if created or not created: 
+    if created: # or not created: 
         # WTF, get or create doesnt seem to work now and i'm being lazy
         # it keeps returning false, even if the user doesn't exist.
         # for now be lazy and just always reset the password
