@@ -107,3 +107,5 @@ LOGIN_REDIRECT_URL = '/'
 
 CONSUMER_KEY = 'zVxVWGT3bIMHrC4th8bJQ'
 CONSUMER_SECRET = 'oc8cYDjOwruMJycfoJcfU4CzrnwiMuapfwABm1k4c'
+
+AUTH_PROFILE_MODULE = 'main.UserProfile'

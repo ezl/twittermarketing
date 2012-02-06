@@ -5,14 +5,12 @@ import random
 from django.conf import settings
 from django.core.management.base import NoArgsCommand
 
-from main.models import TwitterAccount, Target
+from main.models import TwitterAccount, Target, UserProfile
 from django.contrib.auth.models import User
 
 import utils
 import tweepy
 from tweepy import TweepError, Cursor
-import tms
-from tms import  queries, geocode
 
 from utils import lookup_users_by_id, lookup_users_by_screen_name
 
@@ -36,10 +34,6 @@ api.lookup_users(screen_names=screen_names)
 
 """
 
-geocode=None
-geocode = "25.774252,-80.190262,35mi" # Miami
-hits_per_query = 4
-reciprocation_window = 24 # hours
 queries = [
     "%22looking%20for%20an%20apartment%22",
     #"%22running%20credit%20checks%22",
@@ -55,7 +49,21 @@ class Command(NoArgsCommand):
     help = 'Find some followers'
 
     def handle_noargs(self, **options):
-        for user in User.objects.all():
+        profiles = UserProfile.objects.filter(marketing_on=True)
+        print "=" * 70
+        print "[ Start marketing ]".center(70)
+        print "=" * 70
+        for profile in profiles:
+            # get the user
+            user = profile.user
+
+            # get the params of the marketing strategy
+            geocode = profile.geocode.strip() or None
+            hits_per_query = profile.hits_per_query
+            reciprocation_window = profile.reciprocation_window
+            queries = [q.strip() for q in profile.queries.split("\r\n")]
+            strategy = profile.strategy
+
             api = utils.get_user_api(user)
             print "[ Start marketing for %s ]" % user
             self.api = api
@@ -298,7 +306,13 @@ class Command(NoArgsCommand):
 
         for target in candidates:
             try:
-                self.follow_user(target)
+                if self.strategy == UserProfile.FOLLOW:
+                    self.follow_user(target)
+                elif self.strategy == UserProfile.TWEET:
+                    # Do the tweet strategy
+                    pass
+                else:
+                    pass
             except Exception, e:
                 print e
                 return

@@ -44,7 +44,7 @@ class UserProfile(TimeStampedModel):
         "Read https://dev.twitter.com/docs/using-search to understand how "
         "to construct your queries."
     )
-    queries = models.TextField(help_text=query_help_text)
+    queries = models.TextField(help_text=query_help_text, null=True, blank=True)
 
 
 
