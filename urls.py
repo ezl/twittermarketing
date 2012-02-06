@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 from django.contrib.auth.decorators import login_required
+from django.views.generic.simple import direct_to_template
 
 from main.views import UserProfileView
 
@@ -14,5 +15,8 @@ urlpatterns = patterns('',
     url(r'^twitter/test_tweet/$', 'main.views.test_tweet', name='test_tweet'),
 
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
+    url(r'^accounts/login/$', direct_to_template, {
+        'template': "registration/login.html"
+        }, name='logout'),
     url(r'^profile/$', login_required(UserProfileView.as_view()), name='profile'),
 )

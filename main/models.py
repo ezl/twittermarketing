@@ -25,7 +25,27 @@ class FollowQueue(TimeStampedModel):
 # NEW STUFF BELOW HERE!
 
 class UserProfile(TimeStampedModel):
+    TWEET  = "T"
+    FOLLOW = "F"
+    STRATEGY_CHOICES = (
+        (TWEET,  "Send tweets to all candidates."),
+        (FOLLOW, "Follow candidates"),
+    )
     user = models.OneToOneField(User)
+    marketing_on = models.BooleanField(default=False)
+    strategy = models.CharField(max_length=1, choices=STRATEGY_CHOICES, default=FOLLOW)
+    reciprocation_window = models.IntegerField(default=72)
+    geocode = models.CharField(max_length=63, null=True, blank=True)
+    hits_per_query = models.IntegerField(default=50)
+    query_help_text = (
+        "Each row specifies a query to run on Twitter. This is equivalent to "
+        "searching for tweets on http://twitter.com/search. "
+        "However, be aware that there are weird formatting issues."
+        "Read https://dev.twitter.com/docs/using-search to understand how "
+        "to construct your queries."
+    )
+    queries = models.TextField(help_text=query_help_text)
+
 
 
 class TwitterAccount(TimeStampedModel):

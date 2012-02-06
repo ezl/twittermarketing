@@ -4,5 +4,5 @@ from models import UserProfile
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        exlcude = ('user',)
+        exclude = ('user', 'hits_per_query', 'reciprocation_window')
 

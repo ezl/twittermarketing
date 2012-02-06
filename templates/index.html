@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block main %}
+{% if request.user.is_authenticated %}
 <h1>Current stats</h1>
     Followers: {{ followers_count }}, 
     Friends: {{ friends_count }}
+{% endif %}
+
 <h1>Snapshots</h1>
 {% for s in snapshots %}
     <p>
