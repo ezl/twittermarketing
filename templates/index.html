@@ -1,21 +1,50 @@
 {% extends "base.html" %}
 {% block main %}
+
+
 {% if request.user.is_authenticated %}
-<h1>Current stats</h1>
-    Followers: {{ followers_count }}, 
-    Friends: {{ friends_count }}
+    <h1>Current stats</h1>
+        Followers: {{ followers_count }}, 
+        Friends: {{ friends_count }}
+
+    <h1>Snapshots</h1>
+    {% for s in snapshots %}
+        <p>
+        {{ s.created }}, 
+        {{ s.twitter_account.screen_name }}, 
+        Followers:{{ s.followers_count }}, 
+        Friends:{{ s.friends_count }}
+        </p>
+    {% empty %}
+        No snapshots or you're not logged in.
+    {% endfor %}
+    <hr />
+{% else %}
+
+<p>Stripped down no frills site.  It is ugly as sin and I'm ok with that. </p>
+<p style="font-weight: bold;">TLDR: Give me your twitter handle and this will go search for people tweeting about stuff you care about and follow them.  if they follow you back, you send them a marketing tweet.</p>
+<p style="font-weight: bold;">Detail:</p>
+
+<ol>
+    <li>Search for persons of interest (generally via keywords and geotag)</li>
+    <li>For each person of interest, see if that person is already in our db of twitter people we have engaged in the past.   If yes, skip them. If no, add them to the "to engage" list</li>
+    <li>See if anyone we have previously reached out to has followed us back.  If yes, move them to the "followed and they followed back" category from above.  If no, see if they have been given enough time to follow back so we should stop following them.  If its been more than X days and we havent gotten a response, just give up and unfollow them. These we move to the "followed and they were unresponsive" category.  Everyone else is in the "pending response" category, and we wait until enough time has elapsed to move them out.</li>
+    <li>Use the remaining API hits I have to follow + DM as many people as I can in the "to engage" list.  They get moved into the "pending response" list as we reach out to them.
+1/10th of the time, instead of a DM, I send out a reply to that user like "hey @user, blah blah interested in http://mysite?"</li>
+</ol>
+
+<p style="font-weight: bold;">Why do you do it that way?</p>
+<p>The reason for the unfollowing is because twitter has a limit on the ratio of follower/followees.  By constantly adding you';ll hit that barrier, so we really only want to follow people who are helping our cause of growing our audience.</p>
+<p>I prefer to follow then DM/tweet because otherwise my entire twitter stream gets cluttered with messages like "@target hey i suck check out my website", then my day 3 people will unfollow me.</p>
+<p>Its not perfect, you'll end up following a lot of bots that autofollow you back, but hey, I want real followers to come to my twitter page and be shocked at how awesome i am and how many followers i have, even if they're bots.</p>
+
+<p style="font-weight: bold;">Improvements:</p>
+<ol>
+    <li>Search for users by who they're following -- follow all your competitors followers</li>
+    <li>Different strategies: Maybe I should be tweeting people instead of following</li>
+    <li>Search for users by their profile (do you self identify as X in your profile?)</li>
+</ol>
 {% endif %}
 
-<h1>Snapshots</h1>
-{% for s in snapshots %}
-    <p>
-    {{ s.created }}, 
-    {{ s.twitter_account.screen_name }}, 
-    Followers:{{ s.followers_count }}, 
-    Friends:{{ s.friends_count }}
-    </p>
-{% empty %}
-    No snapshots or you're not logged in.
-{% endfor %}
+
 {% endblock %}
-<hr />
