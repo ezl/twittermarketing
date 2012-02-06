@@ -40,6 +40,8 @@ class TwitterAccount(TimeStampedModel):
     access_key      = models.CharField(max_length=255, null=True, blank=True)
     access_secret   = models.CharField(max_length=255, null=True, blank=True)
 
+    def __unicode__(self):
+        return self.screen_name
 
 class TwitterAccountSnapshot(TimeStampedModel):
     twitter_account = models.ForeignKey(TwitterAccount)

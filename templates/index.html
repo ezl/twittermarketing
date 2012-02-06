@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 {% block main %}
-<h1<Snapshots</h1>
+<h1>Current stats</h1>
+    Followers: {{ followers_count }}, 
+    Friends: {{ friends_count }}
+<h1>Snapshots</h1>
 {% for s in snapshots %}
     <p>
     {{ s.created }}, 
     {{ s.twitter_account.screen_name }}, 
-    Folowers:{{ s.followers_count }}, 
-    Friends:{{ s.friends_count }}, 
+    Followers:{{ s.followers_count }}, 
+    Friends:{{ s.friends_count }}
     </p>
 {% empty %}
-    No snapshots
+    No snapshots or you're not logged in.
 {% endfor %}
 {% endblock %}
 <hr />

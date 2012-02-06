@@ -9,28 +9,23 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from forms import UserProfileForm
 from models import UserProfile, TwitterAccount, TwitterAccountSnapshot
-from utils import get_or_create_twitter_account
+from utils import get_or_create_twitter_account, get_user_api
 
-
-def get_user_api(user):
-    if user.is_authenticated():
-        auth = tweepy.OAuthHandler(settings.CONSUMER_KEY,
-                                   settings.CONSUMER_SECRET)
-        auth.set_access_token(user.twitteraccount.access_key,
-                              user.twitteraccount.access_secret)
-        api = tweepy.API(auth)
-    else:
-        api = tweepy.API()
-    return api
 
 def index(request):
     template_name = "index.html"
 
     if request.user.is_authenticated():
-        snapshots = TwitterAccountSnapshot.objects.filter(twitter_account__user=request.user)
+        snapshots = TwitterAccountSnapshot.objects\
+                .filter(twitter_account__user=request.user)\
+                .order_by("-created")
         api = get_user_api(request.user)
-    else:
-        snapshots = TwitterAccountSnapshot.objects.none()
+        me = api.me()
+
+        followers_count = me.followers_count
+        friends_count   = me.friends_count
+        listed_count    = me.listed_count
+
     ctx = locals()
     return direct_to_template(request, template_name, ctx)
 
@@ -46,6 +41,7 @@ def test_tweet(request):
     api = get_user_api(request.user)
     api.update_status("Test")
     return HttpResponseRedirect("/")
+
 
 def twitter_done(request):
     token = request.session.get('unauthed_token', None)
