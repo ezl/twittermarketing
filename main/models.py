@@ -32,10 +32,10 @@ class UserProfile(TimeStampedModel):
         (FOLLOW, "Follow candidates"),
     )
     user = models.OneToOneField(User)
-    marketing_on = models.BooleanField(default=False)
-    strategy = models.CharField(max_length=1, choices=STRATEGY_CHOICES, default=FOLLOW)
+    marketing_on = models.BooleanField(default=False, help_text="This is OFF by default.  If you put it ON, the site will search for twitter users for you and try to engage them")
+    strategy = models.CharField(max_length=1, choices=STRATEGY_CHOICES, default=FOLLOW, help_text="Only the 'follow candidates' strategy does anything for now")
     reciprocation_window = models.IntegerField(default=72)
-    geocode = models.CharField(max_length=63, null=True, blank=True)
+    geocode = models.CharField(max_length=63, null=True, blank=True, help_text="set up the geocode as per twitters examples on their dveloper homepage.  they look like 'latitude,longitude,radius'.  Example for Miami: '25.774252,-80.190262,35mi'")
     hits_per_query = models.IntegerField(default=50)
     query_help_text = (
         "Each row specifies a query to run on Twitter. This is equivalent to "
