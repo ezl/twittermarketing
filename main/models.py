@@ -45,6 +45,8 @@ class UserProfile(TimeStampedModel):
         "to construct your queries."
     )
     queries = models.TextField(help_text=query_help_text, null=True, blank=True)
+    tweets = models.TextField(help_text="Tweets you'll tweet publicly.  One on each row.  Since they're public, you should list quite a few so it'll seem like yu're mixing it up, instead of always tweeting the same thing.  Each one will be prepended with a username like @alextrebek. These will be replies to people, if they follow you back.  Limit each row to 125 characters (reserving 15 for the username)", null=True, blank=True)
+    direct_messages = models.TextField(help_text="Private DMs when people follow you back. Since they're private, its less important to be unique here.  Need at least one though.", null=True, blank=True)
 
 
 

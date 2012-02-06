@@ -58,11 +58,13 @@ class Command(NoArgsCommand):
             user = profile.user
 
             # get the params of the marketing strategy
-            geocode = profile.geocode.strip() or None
-            hits_per_query = profile.hits_per_query
-            reciprocation_window = profile.reciprocation_window
-            queries = [q.strip() for q in profile.queries.split("\r\n")]
-            strategy = profile.strategy
+            self.geocode = profile.geocode.strip() or None
+            self.hits_per_query = profile.hits_per_query
+            self.reciprocation_window = profile.reciprocation_window
+            self.queries = [q.strip() for q in profile.queries.split("\r\n")]
+            self.dms = [q.strip() for q in profile.direct_messages.split("\r\n")]
+            self.tweets  = [q.strip() for q in profile.tweets.split("\r\n")]
+            self.strategy = profile.strategy
 
             api = utils.get_user_api(user)
             print "[ Start marketing for %s ]" % user
@@ -159,8 +161,7 @@ class Command(NoArgsCommand):
                 )
             if target.status == Target.PURGATORY:
                 # Yay someone we targeted reciprocated follow
-                self.contact(target.hunted)
-                pass
+                self.follow_reciprocated(target)
             else:
                 print target.status
                 # Either a totally external follow,
@@ -184,7 +185,7 @@ class Command(NoArgsCommand):
 
         print "[Prune losers]"
         # check to see if people i followed follow me back
-        cutoff_time = datetime.now() - timedelta(hours=reciprocation_window)
+        cutoff_time = datetime.now() - timedelta(hours=self.reciprocation_window)
         ingrates = Target.objects.filter(
             hunter=self.user,
             status=Target.PURGATORY,
@@ -203,27 +204,11 @@ class Command(NoArgsCommand):
                 self.contact(ingrate)
 
 
-    def contact(self, persontocontact, msg=None):
-        print "CONTACT THE NEW GUY"
-        return
-
-#         if False:
-#             """
-#             This doesn't actually work.
-#             """
-#             if random.randint(1, 30) == 10:
-#                 status_message = random.sample(status_messages, 1)[0]
-#                 api.update_status("@%s %s" % (new_follower.screen_name, \
-#                                               status_message))
-#                 print "    - Updated status to: %s" % new_follower.screen_name
-#             else:
-#                 direct_message = random.sample(direct_messages, 1)[0]
-#                 api.send_direct_message(user_id=new_follower.twitter_id,
-#                                         text=direct_message)
-#                 print "    - Sent DM to: %s" % new_follower.screen_name
-
     def find_new_followers(self):
         api = self.api
+        geocode = self.geocode
+        queries = self.queries
+        hits_per_query = self.hits_per_query
         """Find new followers and dump them in the db"""
 
         # Find statuses that match our interests
@@ -292,25 +277,52 @@ class Command(NoArgsCommand):
             target.status = Target.PURGATORY
             target.save()
 
-    def tweet_user(self, target):
+
+    def dm_user(self, target, msg=None):
+        direct_message = random.sample(self.dms, 1)[0]
+        try:
+            api.send_direct_message(screen_name=target.hunted.screen_name,
+                                    text=direct_message)
+        except Exception, e:
+            print e
+            raise Exception, e
+        print "Direct message to user: %s" % target.hunted.screen_name
+
+    def tweet_user(self, target, msg=None):
         """This is one of 2 possible actions we can take.
             We're either interested in following ppl or tweeting people.
         """
+        tweet = "@%s: %s" % (target.hunted.screen_name,
+                             random.sample(self.tweets, 1)[0]
+                            )
+        tweet = tweet [:140]
+        try:
+            api.update_status(tweet)
+        except Exception, e:
+            print e
+            raise Exception, e
         print "Tweet at user: %s" % target.hunted.screen_name
 
+    def follow_reciprocated(self, target):
+        """When someone reciprocates a follow,  either DM or @reply."""
+
+        if random.randint(1, 20) == 1: # 1 in 20 are public @replies
+            tweet_user(target)
+        else:
+            dm_user(target)
 
     def initiate_contact(self):
+        strategy = self.strategy
         """Loop through the people on deck and start contacting them until exception"""
         candidates = Target.objects.filter(hunter=self.user, status=Target.ON_DECK)
         print "[Start initiating contact: %s]" % candidates.count()
 
         for target in candidates:
             try:
-                if self.strategy == UserProfile.FOLLOW:
+                if strategy == UserProfile.FOLLOW:
                     self.follow_user(target)
-                elif self.strategy == UserProfile.TWEET:
-                    # Do the tweet strategy
-                    pass
+                elif strategy == UserProfile.TWEET:
+                    self.tweet_user(target)
                 else:
                     pass
             except Exception, e:
