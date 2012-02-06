@@ -17,6 +17,6 @@ urlpatterns = patterns('',
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
     url(r'^accounts/login/$', direct_to_template, {
         'template': "registration/login.html"
-        }, name='logout'),
+        }, name='login'),
     url(r'^profile/$', login_required(UserProfileView.as_view()), name='profile'),
 )
