@@ -13,6 +13,7 @@ from utils import get_or_create_twitter_account, get_user_api
 
 import tweepy
 
+import datetime
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
 
@@ -38,8 +39,9 @@ def index(request):
 
 @login_required
 def test_tweet(request):
+    now = datetime.datetime.now()
     api = get_user_api(request.user)
-    api.update_status("Test")
+    api.update_status("Test at %s" % now)
     return HttpResponseRedirect("/")
 
 
