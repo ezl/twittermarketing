@@ -48,6 +48,8 @@ class UserProfile(TimeStampedModel):
     tweets = models.TextField(help_text="Tweets you'll tweet publicly.  One on each row.  Since they're public, you should list quite a few so it'll seem like yu're mixing it up, instead of always tweeting the same thing.  Each one will be prepended with a username like @alextrebek. These will be replies to people, if they follow you back.  Limit each row to 125 characters (reserving 15 for the username)", null=True, blank=True)
     direct_messages = models.TextField(help_text="Private DMs when people follow you back. Since they're private, its less important to be unique here.  Need at least one though.", null=True, blank=True)
 
+    def __unicode__(self):
+        return self.user.username
 
 
 class TwitterAccount(TimeStampedModel):
@@ -70,6 +72,9 @@ class TwitterAccountSnapshot(TimeStampedModel):
     followers_count = models.CharField(max_length=15, null=True, blank=True)
     friends_count   = models.CharField(max_length=15, null=True, blank=True)
     listed_count    = models.CharField(max_length=15, null=True, blank=True)
+
+    def __unicode__(self):
+        return self.twitter_account
 
 
 class Target(TimeStampedModel):
@@ -105,6 +110,9 @@ class Target(TimeStampedModel):
     hunted = models.ForeignKey(TwitterAccount)
     reason = models.CharField(max_length=255, help_text="Why did we target this user?")
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=ON_DECK)
+
+    def __unicode__(self):
+        return "%s --> %s" % (self.hunter, self.hunted)
 
 
 def create_user_profile_on_user_post_save(sender, instance, created, **kwargs):
