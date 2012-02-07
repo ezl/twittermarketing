@@ -85,6 +85,9 @@ class Command(NoArgsCommand):
             self.find_new_followers()
             self.initiate_contact()
 
+            print "DONE"
+            print
+
 
     def add_untracked_friends(self):
         """ Add previously untracked users
@@ -300,6 +303,8 @@ class Command(NoArgsCommand):
         except Exception, e:
             print e
             raise Exception, e
+        target.status = Target.FOLLOWER
+        target.save()
         print "Tweet at user: %s" % target.hunted.screen_name
 
     def follow_reciprocated(self, target):
