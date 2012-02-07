@@ -65,7 +65,7 @@ class TwitterAccount(TimeStampedModel):
     access_secret   = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
-        return self.screen_name
+        return "%s" % self.screen_name
 
 class TwitterAccountSnapshot(TimeStampedModel):
     twitter_account = models.ForeignKey(TwitterAccount)
@@ -74,7 +74,7 @@ class TwitterAccountSnapshot(TimeStampedModel):
     listed_count    = models.CharField(max_length=15, null=True, blank=True)
 
     def __unicode__(self):
-        return self.twitter_account
+        return "%s" % self.twitter_account.screen_name
 
 
 class Target(TimeStampedModel):
