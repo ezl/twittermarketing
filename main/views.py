@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from forms import UserProfileForm
-from models import UserProfile, TwitterAccount, TwitterAccountSnapshot
+from models import UserProfile, TwitterAccount, TwitterAccountSnapshot, Target
 from utils import get_or_create_twitter_account, get_user_api
 
 import tweepy
@@ -24,6 +24,7 @@ def index(request):
         snapshots = TwitterAccountSnapshot.objects\
                 .filter(twitter_account__user=request.user)\
                 .order_by("-created")
+        targets = Target.objects.filter(hunter=request.user)
         api = get_user_api(request.user)
         me = api.me()
 

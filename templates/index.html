@@ -3,22 +3,39 @@
 
 
 {% if request.user.is_authenticated %}
-    <h1>Current stats</h1>
+    <div>
+        <h1>Current stats</h1>
         Followers: {{ followers_count }}, 
         Friends: {{ friends_count }}
+    </div>
 
-    <h1>Snapshots</h1>
-    {% for s in snapshots %}
-        <p>
-        {{ s.created }}, 
-        {{ s.twitter_account.screen_name }}, 
-        Followers:{{ s.followers_count }}, 
-        Friends:{{ s.friends_count }}
-        </p>
-    {% empty %}
-        No snapshots or you're not logged in.
-    {% endfor %}
+    <div>
+        <h1>Snapshots</h1>
+        {% for s in snapshots %}
+            <p>
+            {{ s.created }}, 
+            {{ s.twitter_account.screen_name }}, 
+            Followers:{{ s.followers_count }}, 
+            Friends:{{ s.friends_count }}
+            </p>
+        {% empty %}
+            No snapshots or you're not logged in.
+        {% endfor %}
+    </div>
     <hr />
+    <div>
+        <h1>Poops</h1>
+        <table>
+        {% for target in targets %}
+            <tr>
+                <td>{{ target.modified }}</td>
+                <td>{{ target.hunted }}</td>
+                <td>{{ target.status }}</td>
+                <td>{{ target.reason }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
 {% else %}
 
 <p>Stripped down no frills site.  It is ugly as sin and I'm ok with that. </p>
