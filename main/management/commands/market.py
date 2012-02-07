@@ -49,7 +49,7 @@ class Command(NoArgsCommand):
     help = 'Find some followers'
 
     def handle_noargs(self, **options):
-        profiles = UserProfile.objects.filter(marketing_on=True)
+        profiles = UserProfile.objects.filter(marketing_on=True).order_by("-created")
         print "=" * 70
         print "[ Start marketing ]".center(70)
         print "=" * 70
@@ -290,7 +290,6 @@ class Command(NoArgsCommand):
                                     text=direct_message)
         except Exception, e:
             print e
-            raise Exception, e
         print "Direct message to user: %s" % target.hunted.screen_name
 
     def tweet_user(self, target, msg=None):
@@ -305,7 +304,6 @@ class Command(NoArgsCommand):
             self.api.update_status(tweet)
         except Exception, e:
             print e
-            raise Exception, e
         target.status = Target.FOLLOWER
         target.save()
         print "Tweet at user: %s" % target.hunted.screen_name
@@ -329,11 +327,11 @@ class Command(NoArgsCommand):
                 if strategy == UserProfile.FOLLOW:
                     self.follow_user(target)
                 elif strategy == UserProfile.TWEET:
-                    self.tweet_user(target)
+                    self.follow_user(target)
                 else:
                     pass
             except Exception, e:
-                print e
+                print e # probably the rate limit
                 return
 
         # while not exception, keep popping items off db and reaching out
