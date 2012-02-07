@@ -62,8 +62,11 @@ class Command(NoArgsCommand):
             self.hits_per_query = profile.hits_per_query
             self.reciprocation_window = profile.reciprocation_window
             self.queries = [q.strip() for q in profile.queries.split("\r\n")]
-            self.dms = [q.strip() for q in profile.direct_messages.split("\r\n")]
-            self.tweets  = [q.strip() for q in profile.tweets.split("\r\n")]
+            self.dms = [q.strip() for q in profile.direct_messages.strip().split("\r\n")]
+            self.tweets  = [q.strip() for q in profile.tweets.strip().split("\r\n")]
+            # Remove empty string
+            self.dms = filter(lambda x: bool(x), self.dms)
+            self.tweets = filter(lambda x: bool(x), self.tweets)
             self.strategy = profile.strategy
 
             api = utils.get_user_api(user)
