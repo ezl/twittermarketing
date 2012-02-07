@@ -167,7 +167,7 @@ class Command(NoArgsCommand):
                 # Either a totally external follow,
                 # an ingrate changed mind, or someone who we
                 # chatted became interested and followed
-                self.contact(target.hunted)
+                self.follow_reciprocated(target)
                 pass
             # Either way the action is the same, follow him
             target.status = Target.FOLLOWER
@@ -250,7 +250,6 @@ class Command(NoArgsCommand):
                 except Exception, e:
                     print "WEIRD ERROR FINDING TWEET"
                     try:
-                        print from_user.lower()
                         print user.screen_name.lower()
                     except Exception, e:
                         print e
@@ -281,7 +280,7 @@ class Command(NoArgsCommand):
     def dm_user(self, target, msg=None):
         direct_message = random.sample(self.dms, 1)[0]
         try:
-            api.send_direct_message(screen_name=target.hunted.screen_name,
+            self.api.send_direct_message(screen_name=target.hunted.screen_name,
                                     text=direct_message)
         except Exception, e:
             print e
@@ -297,7 +296,7 @@ class Command(NoArgsCommand):
                             )
         tweet = tweet [:140]
         try:
-            api.update_status(tweet)
+            self.api.update_status(tweet)
         except Exception, e:
             print e
             raise Exception, e
@@ -307,9 +306,9 @@ class Command(NoArgsCommand):
         """When someone reciprocates a follow,  either DM or @reply."""
 
         if random.randint(1, 20) == 1: # 1 in 20 are public @replies
-            tweet_user(target)
+            self.tweet_user(target)
         else:
-            dm_user(target)
+            self.dm_user(target)
 
     def initiate_contact(self):
         strategy = self.strategy

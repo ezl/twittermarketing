@@ -1,0 +1,9 @@
+<VirtualHost *:80>
+    ServerName twitterspammer.com
+    ServerAlias www.twitterspammer.com
+
+    WSGIDaemonProcess ezl user=www-data group=www-data threads=2
+    WSGIProcessGroup ezl
+    WSGISCriptAlias / /home/ezl/code/twittermarketing/twittermarketing.wsgi
+</VirtualHost>
+
