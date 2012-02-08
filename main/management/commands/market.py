@@ -73,27 +73,31 @@ class Command(NoArgsCommand):
 
             self.strategy = profile.strategy
 
-            api = utils.get_user_api(user)
-            print "[ Start marketing for %s ]" % user
-            self.api = api
-            self.user = user
-            self.me = api.me()
-            print "friends: %s, followers %s" % (self.me.friends_count,
-                                                 self.me.followers_count)
-            # Do work
+            try:
+                api = utils.get_user_api(user)
+                print "[ Start marketing for %s ]" % user
+                self.api = api
+                self.user = user
+                self.me = api.me()
+                print "friends: %s, followers %s" % (self.me.friends_count,
+                                                     self.me.followers_count)
+                # Do work
 
-            # DB consistency operations -- make sure our sheets match twitter sheets.  we track adds, not deletes.
-            # This takes a long time, we can move it to its own function later to run daily instead of hourly
-            self.add_untracked_friends()
-            self.add_untracked_followers()
+                # DB consistency operations -- make sure our sheets match twitter sheets.  we track adds, not deletes.
+                # This takes a long time, we can move it to its own function later to run daily instead of hourly
+                self.add_untracked_friends()
+                self.add_untracked_followers()
 
-            #main work
-            self.prune_losers()
-            self.find_new_followers()
-            self.initiate_contact()
+                #main work
+                self.prune_losers()
+                self.find_new_followers()
+                self.initiate_contact()
 
-            print "DONE"
-            print
+                print "DONE with %s" % self.me.screen_name
+                print
+            except Exception, e:
+                print "EXCEPTION DURING '%s': %s" % (self.me.screen_name, e)
+                continue
 
 
     def add_untracked_friends(self):
