@@ -42,7 +42,7 @@ USE_I18N = True
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
-USE_L10N = True
+USE_L10N = False
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -108,3 +108,4 @@ LOGIN_REDIRECT_URL = '/'
 CONSUMER_KEY = 'tbFtKQhXgKc3SwlFeXmuA'
 CONSUMER_SECRET = 'xXBlpwkdvZef5tAd6Idi2EsusSnKHTAUUC89SvPcxA'
 AUTH_PROFILE_MODULE = 'main.UserProfile'
+DATETIME_FORMAT = 'n/j P'

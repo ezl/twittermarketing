@@ -24,7 +24,8 @@ def index(request):
         snapshots = TwitterAccountSnapshot.objects\
                 .filter(twitter_account__user=request.user)\
                 .order_by("-created")
-        targets = Target.objects.filter(hunter=request.user)
+        targets = Target.objects.filter(hunter=request.user)\
+                .order_by("-created")
         api = get_user_api(request.user)
         me = api.me()
 

@@ -25,7 +25,23 @@
     <hr />
     <div>
         <h1>Poops</h1>
+        <p>Statuses:</p>
+        <p>
+        P==We're waiting to see if they'll follow back
+        </p>
+        <p>
+        Q==They're queued up to be contacted
+        </p>
+        <p>
+        F==We decided these folks are good to go (we manually followed them or they followed us back after we engaged, or we don't care if they follow us (tweet strategy))
+        </p>
         <table>
+        <th>
+          <td>Modified</td>
+          <td>Screen name</td>
+          <td>Status</td>
+          <td>Reason we engaged</td>
+        </th>
         {% for target in targets %}
             <tr>
                 <td>{{ target.modified }}</td>
