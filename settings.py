@@ -100,6 +100,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django_extensions',
     'main',
+    'south',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
 )
