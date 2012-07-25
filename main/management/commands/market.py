@@ -64,10 +64,12 @@ class Command(NoArgsCommand):
             self.queries = [q.strip() for q in profile.queries.split("\r\n")]
             self.dms = [q.strip() for q in profile.direct_messages.strip().split("\r\n")]
             self.tweets  = [q.strip() for q in profile.tweets.strip().split("\r\n")]
+            self.competitors= [q.strip() for q in profile.competitors.strip().split("\r\n")]
             # Remove empty string
             self.queries = filter(lambda x: bool(x), self.queries)
             self.dms = filter(lambda x: bool(x), self.dms)
             self.tweets = filter(lambda x: bool(x), self.tweets)
+            self.competitors = filter(lambda x: bool(x), self.competitors)
             if len(self.queries) == 0 or len(self.dms) == 0 or len(self.tweets) == 0:
                 continue
 
@@ -85,11 +87,11 @@ class Command(NoArgsCommand):
 
                 # DB consistency operations -- make sure our sheets match twitter sheets.  we track adds, not deletes.
                 # This takes a long time, we can move it to its own function later to run daily instead of hourly
-                self.add_untracked_friends()
-                self.add_untracked_followers()
+                #ADD BACK self.add_untracked_friends()
+                #ADD BACK self.add_untracked_followers()
 
                 #main work
-                self.prune_losers()
+                #ADD BACK self.prune_losers()
                 self.find_new_followers()
                 self.initiate_contact()
 
@@ -225,27 +227,40 @@ class Command(NoArgsCommand):
         hits_per_query = self.hits_per_query
         """Find new followers and dump them in the db"""
 
-        # Find statuses that match our interests
-        print "[Find new followers]"
-        n = hits_per_query
-        search_dict = dict()
-        search_dict['lang'] = "en"
-        if not geocode is None:
-            search_dict['geocode'] = geocode
-        statuses = list()
-        print "  - query:"
-        for q in queries:
-            search_dict['q'] = q
-            results = [c for c in Cursor(api.search, **search_dict).items(n)]
-            print "    - %s: %s hits" % (q, len(results))
-            statuses.extend(results)
+        if self.strategy == UserProfile.FOLLOW or self.strategy == UserProfile.TWEET:
+            # Find statuses that match our interests
+            print "[Find new followers]"
+            n = hits_per_query
+            search_dict = dict()
+            search_dict['lang'] = "en"
+            if not geocode is None:
+                search_dict['geocode'] = geocode
+            statuses = list()
+            print "  - query:"
+            for q in queries:
+                search_dict['q'] = q
+                results = [c for c in Cursor(api.search, **search_dict).items(n)]
+                print "    - %s: %s hits" % (q, len(results))
+                statuses.extend(results)
 
-        # Get all the screen names of senders and receivers
-        screen_names = [t.to_user for t in statuses if t.to_user] + \
-                       [t.from_user for t in statuses]
+            # Get all the screen names of senders and receivers
+            screen_names = [t.to_user for t in statuses if t.to_user] + \
+                           [t.from_user for t in statuses]
 
-        # Convert the strings to Tweepy user objects
-        users, remainder = lookup_users_by_screen_name(self.api, screen_names)
+            # Convert the strings to Tweepy user objects
+            users, remainder = lookup_users_by_screen_name(self.api, screen_names)
+
+        if self.strategy == UserProfile.STEAL:
+            print self.competitors
+            for competitor in self.competitors:
+                competitor_friends_ids = self.api.friends_ids(competitor)[0]
+                competitor_followers_ids = self.api.followers_ids(competitor)[0]
+                print competitor_friends_ids
+                print competitor_followers_ids
+                return
+            # use the profile competitors list
+            # for each name in competitors list
+            # add all friends 
 
         for user in users:
             twitter_account, created = utils.get_or_create_twitter_account(user)
@@ -332,7 +347,7 @@ class Command(NoArgsCommand):
 
         for target in candidates:
             try:
-                if strategy == UserProfile.FOLLOW:
+                if strategy == UserProfile.FOLLOW or strategy == UserProfile.STEAL:
                     self.follow_user(target)
                 elif strategy == UserProfile.TWEET:
                     self.follow_user(target)
