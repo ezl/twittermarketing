@@ -251,13 +251,43 @@ class Command(NoArgsCommand):
             users, remainder = lookup_users_by_screen_name(self.api, screen_names)
 
         if self.strategy == UserProfile.STEAL:
+            users = []
             print self.competitors
             for competitor in self.competitors:
-                competitor_friends_ids = self.api.friends_ids(competitor)[0]
-                competitor_followers_ids = self.api.followers_ids(competitor)[0]
-                print competitor_friends_ids
-                print competitor_followers_ids
-                return
+                try: 
+                    competitor_friends_ids = self.api.friends_ids(competitor)[0]
+                    competitor_followers_ids = self.api.followers_ids(competitor)[0]
+                    #to make this easy, we should probably just convert these ids into
+                    #"users" to be followed in the next step.
+                    #these "users" are tweepy users
+                    print competitor_friends_ids
+                    print competitor_followers_ids
+
+                    competitor_friends = self.api.lookup_users(competitor_friends_ids)
+                    competitor_followers = self.api.lookup_users(competitor_followers_ids)
+                    assert len(competitor_friends) == len(competitor_friends_ids)
+                    assert len(competitor_followers) == len(competitor_followers_ids)
+                    # i think the api.lookup_users() method may be constrained to 100
+                    # tweepy users per query, not confirmed.
+                    #https://dev.twitter.com/docs/api/1/get/users/lookup makes it seem like
+                except:
+                    # didn't get all the users, don't remove the competitor
+                    # from the competitor list
+                    pass
+                else:
+                    # got all the competitors friends and followers and converted them
+                    # to tweepy users.
+                    users += competitor_friends
+                    users += competitor_followers
+                    # add them to the users list to be processed in the next block (for user in users)
+                    # then pop the name off the competitors list in the UserProfile
+                    pass
+                return # for now
+
+
+
+
+
             # use the profile competitors list
             # for each name in competitors list
             # add all friends 
