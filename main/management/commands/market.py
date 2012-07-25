@@ -84,14 +84,17 @@ class Command(NoArgsCommand):
                 print "friends: %s, followers %s" % (self.me.friends_count,
                                                      self.me.followers_count)
                 # Do work
-
-                # DB consistency operations -- make sure our sheets match twitter sheets.  we track adds, not deletes.
-                # This takes a long time, we can move it to its own function later to run daily instead of hourly
+                # ----
+                # DB consistency operations -- make sure our sheets match
+                # twitter sheets.  we track adds, not deletes.
+                # This takes a long time, we can move it to its own function
+                # later to run daily instead of hourly
                 #ADD BACK self.add_untracked_friends()
                 #ADD BACK self.add_untracked_followers()
 
                 #main work
                 #ADD BACK self.prune_losers()
+
                 self.find_new_followers()
                 self.initiate_contact()
 
@@ -101,65 +104,63 @@ class Command(NoArgsCommand):
                 print "EXCEPTION DURING '%s': %s" % (self.me.screen_name, e)
                 continue
 
-
     def add_untracked_friends(self):
-        """ Add previously untracked users
+        """Add previously untracked users.
 
-            If user is manually followed through the twitter website,
-            twittermarketing app doesn't know that a relationship exists.
+        If a person is manually followed through the twitter website, this
+        app doesn't know that a relationship exists.
 
-            This method adds untracked users to our repository so we know
-            not to refollow them and we won't multiple message them.
-        """
+        This method adds untracked people to our repository so we know not
+        to refollow them and we won't multiple message them."""
 
         print "[Check for untracked friends]"
         friends_ids_api = self.api.friends_ids()[0]
-        friends_ids_django = [t.hunted.twitter_id for t in Target.objects\
-                .filter(hunter=self.user)\
-                .exclude(status__in=Target.ON_DECK)
-            ]
-        untracked_friends_ids = filter(lambda x: unicode(x) not in friends_ids_django,
-                                       friends_ids_api)
+        targets = Target.objects.filter(hunter=self.user)\
+                      .exclude(status__in=Target.ON_DECK)
+        friends_ids_djangfo = [t.hunted.twitter_id for t in targets]
+        untracked_friends_ids = \
+            filter(lambda x: unicode(x) not in friends_ids_django,
+                   friends_ids_api)
 
-        untracked_friends, remainder = lookup_users_by_id(self.api, untracked_friends_ids)
+        untracked_friends, remainder = lookup_users_by_id(self.api,
+                                                          untracked_friends_ids)
         for untracked_friend in untracked_friends:
-            twitter_account, created = utils.get_or_create_twitter_account(untracked_friend)
+            twitter_account, created = utils.get_or_create_twitter_account(
+                                           untracked_friend)
             target, created = Target.objects.get_or_create(
-                hunter = self.user,
-                hunted = twitter_account,
-                )
+                                  hunter=self.user, hunted=twitter_account)
             target.reason = "External add."
             target.status = Target.FOLLOWER
             target.save()
-            print "  - add friend: %s" % \
-                    twitter_account.screen_name
+            print "  - add friend: %s" % twitter_account.screen_name
 
     def add_untracked_followers(self):
-        """ Add previously untracked users
+        """Add previously untracked users.
 
-            These are people that are following us, but the django
-            database doesn't know about. What that means is that they
-            started following us since the last run of this function.
-            There are 2 reasons that happens:
-                1) We followed them, then they started following us
-                2) They randomly decided to start following us or we
-                   tweeted at them and they started following us.
+        These are people that are following us, but the django database doesn't
+        know about.  What that means is that they started following us since the
+        last run of this function.
 
-            In case 1, that means we had initially put them into purgatory and
-            they responded favorably.  We should tweet/DM them and then mark them
-            as having reciprocated follow.
+        There are 2 reasons that happens:
 
-            In case 2, we're just awesome.  Just add them as if they have
-            reciprocated follow (basically, they're good, we just need them
-            in the database)
+        1) We followed them, then they started following us
+        2) They randomly decided to start following us or we tweeted at them
+        and they started following us.
+
+        In case 1, that means we had initially put them into purgatory and they
+        responded favorably.  We should tweet/DM them and then mark them as
+        having reciprocated follow.
+
+        In case 2, we're just awesome.  Just add them as if they have
+        reciprocated follow (basically, they're good, we just need them in the
+        database)
         """
 
         print "[Check for untracked followers]"
         followers_ids_api = self.api.followers_ids()[0]
-        followers_ids_django = [t.hunted.twitter_id for t in Target.objects\
-                .filter(hunter=self.user)\
-                .filter(status=Target.FOLLOWER)
-            ]
+        target = Target.objects.filter(hunter=self.user)\
+                     .filter(status=Target.FOLLOWER)
+        followers_ids_django = [t.hunted.twitter_id for t in target]
 
         untracked_followers_ids = filter(
             lambda x: unicode(x) not in followers_ids_django,
@@ -168,23 +169,21 @@ class Command(NoArgsCommand):
         #TODO: REMOVE ME
         untracked_followers_ids = untracked_followers_ids[:]
 
-        untracked_followers, remainder = lookup_users_by_id(self.api, untracked_followers_ids)
+        untracked_followers, remainder = lookup_users_by_id(self.api,
+                                             untracked_followers_ids)
         for untracked_follower in untracked_followers:
-            twitter_account, created = utils.get_or_create_twitter_account(untracked_follower)
+            twitter_account, created = \
+                utils.get_or_create_twitter_account(untracked_follower)
             target, created = Target.objects.get_or_create(
-                hunter = self.user,
-                hunted = twitter_account,
-                )
+                hunter=self.user, hunted=twitter_account)
             if target.status == Target.PURGATORY:
                 # Yay someone we targeted reciprocated follow
                 self.follow_reciprocated(target)
             else:
                 print target.status
-                # Either a totally external follow,
-                # an ingrate changed mind, or someone who we
-                # chatted became interested and followed
+                # Either a totally external follow, an ingrate changed mind,
+                # or someone who we chatted became interested and followed
                 self.follow_reciprocated(target)
-                pass
             # Either way the action is the same, follow him
             target.status = Target.FOLLOWER
             target.save()
@@ -193,18 +192,17 @@ class Command(NoArgsCommand):
     def prune_losers(self):
         """Unfollow people who are uninterested in following us.
 
-           When a user is followed by twittermarketing, they're added to a list
-           of users we are following.  If after $RECIPROCATION_WINDOW hours
-           have elapsed, that user hasn't followed us back, unfollow them to
-           make room for us to follow other people.
+        When a user is followed by twittermarketing, they're added to a list
+        of users we are following.  If after $RECIPROCATION_WINDOW hours
+        have elapsed, that user hasn't followed us back, unfollow them to
+        make room for us to follow other people.
         """
-
         print "[Prune losers]"
         # check to see if people i followed follow me back
-        cutoff_time = datetime.now() - timedelta(hours=self.reciprocation_window)
+        cutoff_time = (datetime.now()
+                       - timedelta(hours=self.reciprocation_window))
         ingrates = Target.objects.filter(
-            hunter=self.user,
-            status=Target.PURGATORY,
+            hunter=self.user, status=Target.PURGATORY,
             modified__lt=cutoff_time) # They didn't follow back in time
 
         for ingrate in ingrates:
@@ -219,13 +217,12 @@ class Command(NoArgsCommand):
             finally:
                 self.contact(ingrate)
 
-
     def find_new_followers(self):
+        """Find new followers and dump them in the db"""
         api = self.api
         geocode = self.geocode
         queries = self.queries
         hits_per_query = self.hits_per_query
-        """Find new followers and dump them in the db"""
 
         if self.strategy == UserProfile.FOLLOW or self.strategy == UserProfile.TWEET:
             # Find statuses that match our interests
@@ -295,16 +292,15 @@ class Command(NoArgsCommand):
         for user in users:
             twitter_account, created = utils.get_or_create_twitter_account(user)
             if created:
-                print "    - Save TwitterAccount: %s to django db" % twitter_account.screen_name
+                print "    - Save TwitterAccount: %s to django db" \
+                    % twitter_account.screen_name
             target, created = Target.objects.get_or_create(
-                hunter = self.user,
-                hunted = twitter_account,
-                )
+                hunter=self.user, hunted=twitter_account)
             if created:
                 try:
-                    trigger_tweet = filter(
-                        lambda x: x.from_user.lower() == user.screen_name.lower(),
-                        statuses)[0].text
+                    match = lambda x: (x.from_user.lower() ==
+                                       user.screen_name.lower())
+                    trigger_tweet = filter(match, statuses)[0].text
                     print "    - Trigger:", trigger_tweet
                 except Exception, e:
                     print "WEIRD ERROR FINDING TWEET"
@@ -320,11 +316,9 @@ class Command(NoArgsCommand):
                 pass
                 # print "    - Previously followed this dudesicle: %s" % user.screen_name
 
-
     def follow_user(self, target):
-        """This is one of 2 possible actions we can take.
-            We're either interested in following ppl or tweeting people.
-        """
+        """This is one of 2 possible actions we can take. We're either
+        interested in following people or tweeting people."""
         try:
             self.api.create_friendship(target.hunted.screen_name)
             print "    - Followed: %s" % target.hunted.screen_name
@@ -335,12 +329,11 @@ class Command(NoArgsCommand):
             target.status = Target.PURGATORY
             target.save()
 
-
     def dm_user(self, target, msg=None):
         direct_message = random.sample(self.dms, 1)[0]
         try:
             self.api.send_direct_message(screen_name=target.hunted.screen_name,
-                                    text=direct_message)
+                                         text=direct_message)
         except Exception, e:
             print e
         print "Direct message to user: %s" % target.hunted.screen_name
@@ -350,8 +343,7 @@ class Command(NoArgsCommand):
             We're either interested in following ppl or tweeting people.
         """
         tweet = "@%s: %s" % (target.hunted.screen_name,
-                             random.sample(self.tweets, 1)[0]
-                            )
+                             random.sample(self.tweets, 1)[0])
         tweet = tweet [:140]
         try:
             self.api.update_status(tweet)
@@ -363,7 +355,6 @@ class Command(NoArgsCommand):
 
     def follow_reciprocated(self, target):
         """When someone reciprocates a follow,  either DM or @reply."""
-
         if random.randint(1, 20) == 1: # 1 in 20 are public @replies
             self.tweet_user(target)
         else:
@@ -371,8 +362,10 @@ class Command(NoArgsCommand):
 
     def initiate_contact(self):
         strategy = self.strategy
-        """Loop through the people on deck and start contacting them until exception"""
-        candidates = Target.objects.filter(hunter=self.user, status=Target.ON_DECK)
+        """Loop through the people on deck and start contacting them until
+        exception."""
+        candidates = Target.objects.filter(hunter=self.user,
+                                           status=Target.ON_DECK)
         print "[Start initiating contact: %s]" % candidates.count()
 
         for target in candidates:
