@@ -66,7 +66,11 @@ class Command(NoArgsCommand):
             self.queries = [q.strip() for q in profile.queries.split("\r\n")]
             self.dms = [q.strip() for q in profile.direct_messages.strip().split("\r\n")]
             self.tweets  = [q.strip() for q in profile.tweets.strip().split("\r\n")]
-            self.competitors= [q.strip() for q in profile.competitors.strip().split("\r\n")]
+            if profile.competitors:
+                lines = profile.competitors.strip().split("\r\n")
+                self.competitors = [q.strip() for q in lines]
+            else:
+                self.competitors = []
             # Remove empty string
             self.queries = filter(lambda x: bool(x), self.queries)
             self.dms = filter(lambda x: bool(x), self.dms)
