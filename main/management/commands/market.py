@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 import time
 import random
 
@@ -49,6 +50,7 @@ class Command(NoArgsCommand):
     help = 'Find some followers'
 
     def handle_noargs(self, **options):
+        self.log = logging.getLogger("market")
         profiles = UserProfile.objects.filter(marketing_on=True).order_by("-created")
         print "=" * 70
         print "[ Start marketing ]".center(70)
@@ -224,20 +226,22 @@ class Command(NoArgsCommand):
         queries = self.queries
         hits_per_query = self.hits_per_query
 
+        self.log.debug("Initialize")
+
         if self.strategy == UserProfile.FOLLOW or self.strategy == UserProfile.TWEET:
             # Find statuses that match our interests
-            print "[Find new followers]"
+            self.log.debug("Strategy set to FOLLOW or TWEET")
             n = hits_per_query
             search_dict = dict()
             search_dict['lang'] = "en"
             if not geocode is None:
                 search_dict['geocode'] = geocode
             statuses = list()
-            print "  - query:"
+            self.log.debug("Queries:")
             for q in queries:
                 search_dict['q'] = q
                 results = [c for c in Cursor(api.search, **search_dict).items(n)]
-                print "    - %s: %s hits" % (q, len(results))
+                self.log.debug("  => %s: %s hits" % (q, len(results)))
                 statuses.extend(results)
 
             # Get all the screen names of senders and receivers
@@ -251,7 +255,7 @@ class Command(NoArgsCommand):
             users = []
             print self.competitors
             for competitor in self.competitors:
-                try: 
+                try:
                     competitor_friends_ids = self.api.friends_ids(competitor)[0]
                     competitor_followers_ids = self.api.followers_ids(competitor)[0]
                     #to make this easy, we should probably just convert these ids into
@@ -281,19 +285,15 @@ class Command(NoArgsCommand):
                     pass
                 return # for now
 
-
-
-
-
             # use the profile competitors list
             # for each name in competitors list
-            # add all friends 
+            # add all friends
 
         for user in users:
             twitter_account, created = utils.get_or_create_twitter_account(user)
             if created:
-                print "    - Save TwitterAccount: %s to django db" \
-                    % twitter_account.screen_name
+                self.log.debug("Saved twitter account %s" %
+                               twitter_account.screen_name)
             target, created = Target.objects.get_or_create(
                 hunter=self.user, hunted=twitter_account)
             if created:
@@ -301,13 +301,10 @@ class Command(NoArgsCommand):
                     match = lambda x: (x.from_user.lower() ==
                                        user.screen_name.lower())
                     trigger_tweet = filter(match, statuses)[0].text
-                    print "    - Trigger:", trigger_tweet
+                    self.log.debug("    => trigger: %s" % trigger_tweet[:50])
                 except Exception, e:
-                    print "WEIRD ERROR FINDING TWEET"
-                    try:
-                        print user.screen_name.lower()
-                    except Exception, e:
-                        print e
+                    self.log.exception("Could not get trigger tweet for %s" %
+                                       user.screen_name.lower())
                     trigger_tweet = "Error: Couldn't retrieve tweet."
                 target.reason = trigger_tweet
                 target.status = Target.ON_DECK
