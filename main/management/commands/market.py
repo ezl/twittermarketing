@@ -249,8 +249,8 @@ class Command(NoArgsCommand):
                 statuses.extend(results)
 
             # Get all the screen names of senders and receivers
-            screen_names = [t.to_user for t in statuses if t.to_user] + \
-                           [t.from_user for t in statuses]
+            screen_names = ([t.from_user for t in statuses] +
+                            [t.to_user for t in statuses if t.to_user])
 
             # Convert the strings to Tweepy user objects
             users, remainder = lookup_users_by_screen_name(self.api, screen_names)
@@ -302,8 +302,9 @@ class Command(NoArgsCommand):
                 hunter=self.user, hunted=twitter_account)
             if created:
                 try:
-                    match = lambda x: (x.from_user.lower() ==
-                                       user.screen_name.lower())
+                    screen_name = user.screen_name.lower()
+                    match = lambda x: screen_name in \
+                        (x.from_user.lower(), x.to_user and x.to_user.lower())
                     trigger_tweet = filter(match, statuses)[0].text
                     self.log.debug("    => trigger: %s" % trigger_tweet[:50])
                 except Exception, e:
