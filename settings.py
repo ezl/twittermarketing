@@ -1,3 +1,4 @@
+import logging
 import os
 PROJECT_DIR = os.path.dirname(__file__)
 
@@ -109,3 +110,6 @@ LOGIN_REDIRECT_URL = '/'
 CONSUMER_KEY = 'tbFtKQhXgKc3SwlFeXmuA'
 CONSUMER_SECRET = 'xXBlpwkdvZef5tAd6Idi2EsusSnKHTAUUC89SvPcxA'
 AUTH_PROFILE_MODULE = 'main.UserProfile'
+
+logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(message)s")
+logging.getLogger("market").setLevel(logging.DEBUG)
