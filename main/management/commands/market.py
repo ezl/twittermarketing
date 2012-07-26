@@ -95,8 +95,8 @@ class Command(NoArgsCommand):
                 # twitter sheets.  we track adds, not deletes.
                 # This takes a long time, we can move it to its own function
                 # later to run daily instead of hourly
-                #ADD BACK self.add_untracked_friends()
-                #ADD BACK self.add_untracked_followers()
+                self.add_untracked_friends()
+                self.add_untracked_followers()
 
                 #main work
                 #ADD BACK self.prune_losers()
@@ -107,8 +107,7 @@ class Command(NoArgsCommand):
                 print "DONE with %s" % self.me.screen_name
                 print
             except Exception, e:
-                print "EXCEPTION DURING '%s': %s" % (self.me.screen_name, e)
-                continue
+                raise
 
     def add_untracked_friends(self):
         """Add previously untracked users.
@@ -119,11 +118,11 @@ class Command(NoArgsCommand):
         This method adds untracked people to our repository so we know not
         to refollow them and we won't multiple message them."""
 
-        print "[Check for untracked friends]"
-        friends_ids_api = self.api.friends_ids()[0]
+        self.log.debug("CHECK FOR UNTRACKED FRIENDS")
+        friends_ids_api = self.api.friends_ids()
         targets = Target.objects.filter(hunter=self.user)\
                       .exclude(status__in=Target.ON_DECK)
-        friends_ids_djangfo = [t.hunted.twitter_id for t in targets]
+        friends_ids_django = [t.hunted.twitter_id for t in targets]
         untracked_friends_ids = \
             filter(lambda x: unicode(x) not in friends_ids_django,
                    friends_ids_api)
@@ -138,7 +137,7 @@ class Command(NoArgsCommand):
             target.reason = "External add."
             target.status = Target.FOLLOWER
             target.save()
-            print "  - add friend: %s" % twitter_account.screen_name
+            self.log.debug("  => add friend: %s" % twitter_account.screen_name)
 
     def add_untracked_followers(self):
         """Add previously untracked users.
@@ -162,8 +161,8 @@ class Command(NoArgsCommand):
         database)
         """
 
-        print "[Check for untracked followers]"
-        followers_ids_api = self.api.followers_ids()[0]
+        self.log.debug("CHECK FOR UNTRACKED FOLLOWERS")
+        followers_ids_api = self.api.followers_ids()
         target = Target.objects.filter(hunter=self.user)\
                      .filter(status=Target.FOLLOWER)
         followers_ids_django = [t.hunted.twitter_id for t in target]
@@ -171,9 +170,6 @@ class Command(NoArgsCommand):
         untracked_followers_ids = filter(
             lambda x: unicode(x) not in followers_ids_django,
             followers_ids_api)
-
-        #TODO: REMOVE ME
-        untracked_followers_ids = untracked_followers_ids[:]
 
         untracked_followers, remainder = lookup_users_by_id(self.api,
                                              untracked_followers_ids)
@@ -193,7 +189,7 @@ class Command(NoArgsCommand):
             # Either way the action is the same, follow him
             target.status = Target.FOLLOWER
             target.save()
-            print "  - add follower: %s" % twitter_account.screen_name
+            self.log.debug("  => Add follower: %s" % twitter_account.screen_name
 
     def prune_losers(self):
         """Unfollow people who are uninterested in following us.
@@ -203,7 +199,7 @@ class Command(NoArgsCommand):
         have elapsed, that user hasn't followed us back, unfollow them to
         make room for us to follow other people.
         """
-        print "[Prune losers]"
+        self.log.debug("PRUNE LOSERS")
         # check to see if people i followed follow me back
         cutoff_time = (datetime.now()
                        - timedelta(hours=self.reciprocation_window))
@@ -214,7 +210,7 @@ class Command(NoArgsCommand):
         for ingrate in ingrates:
             ingrate.status = Target.INGRATE
             ingrate.save()
-            print "  - Unfollowed %s" % ingrate.hunted.screen_name
+            self.log.debug("  => Unfollowed %s" % ingrate.hunted.screen_name)
             try:
                 self.api.destroy_friendship(ingrate.hunted)
             except Exception, e:
@@ -247,7 +243,7 @@ class Command(NoArgsCommand):
                 results = [c for c in Cursor(api.search, **search_dict).items(n)]
                 self.log.debug("  => %s: %s hits" % (q, len(results)))
                 statuses.extend(results)
-
+            #self.log.debug("Statuses: %s" % "\n".join([str(s.__dict__) for s in statuses]))
             # Get all the screen names of senders and receivers
             screen_names = ([t.from_user for t in statuses] +
                             [t.to_user for t in statuses if t.to_user])
@@ -255,13 +251,13 @@ class Command(NoArgsCommand):
             # Convert the strings to Tweepy user objects
             users, remainder = lookup_users_by_screen_name(self.api, screen_names)
 
-        if self.strategy == UserProfile.STEAL:
+        elif self.strategy == UserProfile.STEAL:
             users = []
             print self.competitors
             for competitor in self.competitors:
                 try:
-                    competitor_friends_ids = self.api.friends_ids(competitor)[0]
-                    competitor_followers_ids = self.api.followers_ids(competitor)[0]
+                    competitor_friends_ids = self.api.friends_ids(competitor)
+                    competitor_followers_ids = self.api.followers_ids(competitor)
                     #to make this easy, we should probably just convert these ids into
                     #"users" to be followed in the next step.
                     #these "users" are tweepy users
@@ -295,9 +291,6 @@ class Command(NoArgsCommand):
 
         for user in users:
             twitter_account, created = utils.get_or_create_twitter_account(user)
-            if created:
-                self.log.debug("Saved twitter account %s" %
-                               twitter_account.screen_name)
             target, created = Target.objects.get_or_create(
                 hunter=self.user, hunted=twitter_account)
             if created:
@@ -306,11 +299,13 @@ class Command(NoArgsCommand):
                     match = lambda x: screen_name in \
                         (x.from_user.lower(), x.to_user and x.to_user.lower())
                     trigger_tweet = filter(match, statuses)[0].text
-                    self.log.debug("    => trigger: %s" % trigger_tweet[:50])
                 except Exception, e:
                     self.log.exception("Could not get trigger tweet for %s" %
                                        user.screen_name.lower())
                     trigger_tweet = "Error: Couldn't retrieve tweet."
+                self.log.debug("Saved twitter account %s (trigger: %r)" %
+                               (twitter_account.screen_name,
+                                trigger_tweet[:50]))
                 target.reason = trigger_tweet
                 target.status = Target.ON_DECK
                 target.save()
@@ -323,37 +318,32 @@ class Command(NoArgsCommand):
         interested in following people or tweeting people."""
         try:
             self.api.create_friendship(target.hunted.screen_name)
-            print "    - Followed: %s" % target.hunted.screen_name
+            self.log.debug("Followed: %s" % target.hunted.screen_name)
         except Exception, e:
-            raise Exception, e
+            self.log.exception("Could not follow %s" %
+                               target.hunted.screen_name)
         else:
             # Write record of new follow to db
             target.status = Target.PURGATORY
             target.save()
 
     def dm_user(self, target, msg=None):
+        self.log.debug("DM'ing %s" % target.hunted.screen_name)
         direct_message = random.sample(self.dms, 1)[0]
-        try:
-            self.api.send_direct_message(screen_name=target.hunted.screen_name,
-                                         text=direct_message)
-        except Exception, e:
-            print e
-        print "Direct message to user: %s" % target.hunted.screen_name
+        self.api.send_direct_message(screen_name=target.hunted.screen_name,
+                                     text=direct_message)
 
     def tweet_user(self, target, msg=None):
         """This is one of 2 possible actions we can take.
             We're either interested in following ppl or tweeting people.
         """
+        self.log.debug("Tweeting %s" % target.hunted.screen_name)
         tweet = "@%s: %s" % (target.hunted.screen_name,
                              random.sample(self.tweets, 1)[0])
         tweet = tweet [:140]
-        try:
-            self.api.update_status(tweet)
-        except Exception, e:
-            print e
+        self.api.update_status(tweet)
         target.status = Target.FOLLOWER
         target.save()
-        print "Tweet at user: %s" % target.hunted.screen_name
 
     def follow_reciprocated(self, target):
         """When someone reciprocates a follow,  either DM or @reply."""
@@ -368,11 +358,13 @@ class Command(NoArgsCommand):
         exception."""
         candidates = Target.objects.filter(hunter=self.user,
                                            status=Target.ON_DECK)
-        print "[Start initiating contact: %s]" % candidates.count()
+        self.log.debug("Start initiating contact with %d people" %
+                       candidates.count())
 
         for target in candidates:
             try:
-                if strategy == UserProfile.FOLLOW or strategy == UserProfile.STEAL:
+                if (strategy == UserProfile.FOLLOW or
+                    strategy == UserProfile.STEAL):
                     self.follow_user(target)
                 elif strategy == UserProfile.TWEET:
                     self.follow_user(target)
