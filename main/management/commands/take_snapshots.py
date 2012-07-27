@@ -11,8 +11,11 @@ class Command(NoArgsCommand):
 
     def handle_noargs(self, **options):
         for user in User.objects.all():
-            api = utils.get_user_api(user)
-            me = api.me()
+            try:
+                api = utils.get_user_api(user)
+                me = api.me()
+            except:
+                continue
 
             twitter_account = TwitterAccount.objects.get(user=user)
             twitter_account_snapshot = TwitterAccountSnapshot(
