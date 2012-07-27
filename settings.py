@@ -1,3 +1,4 @@
+import logging
 import os
 PROJECT_DIR = os.path.dirname(__file__)
 
@@ -100,6 +101,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django_extensions',
     'main',
+    'south',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
 )
@@ -109,3 +111,6 @@ CONSUMER_KEY = 'tbFtKQhXgKc3SwlFeXmuA'
 CONSUMER_SECRET = 'xXBlpwkdvZef5tAd6Idi2EsusSnKHTAUUC89SvPcxA'
 AUTH_PROFILE_MODULE = 'main.UserProfile'
 DATETIME_FORMAT = 'n/j P'
+
+logging.basicConfig(format="%(asctime)-15s [%(levelname)s] %(message)s")
+logging.getLogger("market").setLevel(logging.DEBUG)

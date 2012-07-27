@@ -2,5 +2,6 @@ Django
 Werkzeug==0.6.2
 django-extensions==0.5
 ipython==0.10
-tweepy==1.7.1
+tweepy==1.10
 wsgiref==0.1.2
+south
