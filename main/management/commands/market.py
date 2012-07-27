@@ -387,7 +387,7 @@ class Command(NoArgsCommand):
 
     def follow_reciprocated(self, target):
         """When someone reciprocates a follow,  either DM or @reply."""
-        if random.randint(1, 20) == 1: # 1 in 20 are public @replies
+        if random.randint(1, 1000) == 1: # 1 in 20 are public @replies
             self.tweet_user(target)
         else:
             try:
