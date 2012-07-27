@@ -228,6 +228,7 @@ class Command(NoArgsCommand):
         hits_per_query = self.hits_per_query
 
         self.log.debug("Initialize")
+        self.log.debug("[ *********   FIND NEW FOLLOWERS *********** ]")
 
         if self.strategy == UserProfile.FOLLOW or self.strategy == UserProfile.TWEET:
             # Find statuses that match our interests
@@ -256,22 +257,27 @@ class Command(NoArgsCommand):
             users = []
             print self.competitors
             for competitor in self.competitors:
+                self.log.debug("[ *********   STEAL %s *********** ]" % competitor)
                 try:
-                    competitor_friends_ids = self.api.friends_ids(competitor)[0]
-                    competitor_followers_ids = self.api.followers_ids(competitor)[0]
+                    competitor_friends_ids = self.api.friends_ids(competitor)
+                    competitor_followers_ids = self.api.followers_ids(competitor)
 
                     if True:
                         new_competitor_friends_ids = [id for id in competitor_friends_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
                         old_competitor_friends_ids = [id for id in competitor_friends_ids if len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
                         new_competitor_followers_ids = [id for id in competitor_followers_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
                         old_competitor_followers_ids = [id for id in competitor_followers_ids if len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
-                        print new_competitor_friends_ids
-                        print old_competitor_friends_ids
-                        print new_competitor_followers_ids
-                        print old_competitor_followers_ids
+                        # print new_competitor_friends_ids
+                        # print old_competitor_friends_ids
+                        # print new_competitor_followers_ids
+                        # print old_competitor_followers_ids
 
-                    new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, new_competitor_friends_ids)
-                    new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, new_competitor_followers_ids)
+                        new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, new_competitor_friends_ids)
+                        new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, new_competitor_followers_ids)
+                    else:
+                        # get all the tweepy users
+                        new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, competitor_friends_ids)
+                        new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, competitor_followers_ids)
 
                 except Exception, e:
                     print e
