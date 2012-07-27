@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block main %}
+<style>
+td { margin: 0px; padding:1px 5px; border: 1px solid black;}
+</style>
 
 
 {% if request.user.is_authenticated %}
@@ -36,12 +39,12 @@
         F==We decided these folks are good to go (we manually followed them or they followed us back after we engaged, or we don't care if they follow us (tweet strategy))
         </p>
         <table>
-        <th>
-          <td>Modified</td>
-          <td>Screen name</td>
-          <td>Status</td>
-          <td>Reason we engaged</td>
-        </th>
+        <tr>
+          <th>Modified</th>
+          <th>Screen name</th>
+          <th>Status</th>
+          <th>Reason we engaged</th>
+        </tr>
         {% for target in targets %}
             <tr>
                 <td>{{ target.modified }}</td>
