@@ -255,6 +255,7 @@ class Command(NoArgsCommand):
 
         elif self.strategy == UserProfile.STEAL:
             users = []
+            stolen_from = {}
             print self.competitors
             for competitor in self.competitors:
                 self.log.debug("[ *********   STEAL %s *********** ]" % competitor)
@@ -262,7 +263,9 @@ class Command(NoArgsCommand):
                     competitor_friends_ids = self.api.friends_ids(competitor)
                     competitor_followers_ids = self.api.followers_ids(competitor)
 
-                    if True:
+                    filter_known_users_to_reduce_api_hits = False
+
+                    if filter_known_users_to_reduce_api_hits is True:
                         new_competitor_friends_ids = [id for id in competitor_friends_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
                         old_competitor_friends_ids = [id for id in competitor_friends_ids if len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
                         new_competitor_followers_ids = [id for id in competitor_followers_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
@@ -272,12 +275,24 @@ class Command(NoArgsCommand):
                         # print new_competitor_followers_ids
                         # print old_competitor_followers_ids
 
+                        print "start lookups"
                         new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, new_competitor_friends_ids)
                         new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, new_competitor_followers_ids)
+                        print "end lookups"
                     else:
                         # get all the tweepy users
+                        print "start lookups"
                         new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, competitor_friends_ids)
                         new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, competitor_followers_ids)
+                        print "end lookups"
+
+                    print "%s has %s friends" % (competitor, len(new_competitor_friends))
+                    print "%s has %s followers" % (competitor, len(new_competitor_followers))
+
+                    # holy crap this is so fucked up i'm ashamed that this code is getting written like this!
+
+                    for u in new_competitor_friends + new_competitor_followers:
+                        stolen_from.update({u.screen_name.lower(): competitor})
 
                 except Exception, e:
                     print e
@@ -298,10 +313,14 @@ class Command(NoArgsCommand):
             # for each name in competitors list
             # add all friends
 
+        # should filter out garbage users. something like:
+        users = [u for u in users if not Target.objects.filter(hunter=self.user, hunted__screen_name=u.screen_name.lower())]
+
         for user in users:
             twitter_account, created = utils.get_or_create_twitter_account(user)
             target, created = Target.objects.get_or_create(
                 hunter=self.user, hunted=twitter_account)
+            print target.hunted.screen_name, created
             if created:
                 try:
                     screen_name = user.screen_name.lower()
@@ -310,7 +329,13 @@ class Command(NoArgsCommand):
                     if not self.strategy == UserProfile.STEAL:
                         trigger_tweet = filter(match, statuses)[0].text
                     else:
-                        trigger_tweet = "Steal from user: %s" % user.screen_name # actually this is wrong... i want to write the correct competitor down, but we don't have that information -- we'd have to embed it in the for competitor in self.competitors loop
+                        try:
+                            trigger_tweet = "Steal from user: %s" % stolen_from.get(screen_name.lower(), "someone. i lost it. sorry.")
+                        except Exception, e:
+                            print "YUCK. ERRORS."
+                            print "YUCK. ERRORS."
+                            print e
+                            print e
                 except Exception, e:
                     self.log.exception("Could not get trigger tweet for %s" %
                                        user.screen_name.lower())
