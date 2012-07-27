@@ -187,7 +187,6 @@ class Command(NoArgsCommand):
                 print target.status
                 # Either a totally external follow, an ingrate changed mind,
                 # or someone who we chatted became interested and followed
-                self.follow_reciprocated(target)
             # Either way the action is the same, follow him
             target.status = Target.FOLLOWER
             target.save()
