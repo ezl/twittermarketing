@@ -61,6 +61,7 @@ class Command(NoArgsCommand):
             user = profile.user
 
             # get the params of the marketing strategy
+            self.profile = profile
             self.geocode = profile.geocode.strip() or None
             self.hits_per_query = profile.hits_per_query
             self.reciprocation_window = profile.reciprocation_window
@@ -256,8 +257,7 @@ class Command(NoArgsCommand):
         elif self.strategy == UserProfile.STEAL:
             users = []
             stolen_from = {}
-            print self.competitors
-            for competitor in self.competitors:
+            for competitor in list(self.competitors):
                 self.log.debug("[ *********   STEAL %s *********** ]" % competitor)
                 try:
                     competitor_friends_ids = self.api.friends_ids(competitor)
@@ -306,8 +306,11 @@ class Command(NoArgsCommand):
                     users += new_competitor_followers
                     # add them to the users list to be processed in the next block (for user in users)
                     # then pop the name off the competitors list in the UserProfile
-                    pass
+                    # fuck it for now i'm going to just cycle the item to the bottom of the competitor list so we can start getting maximal coverage within api constraints by making sure the top person is new every time
+                    self.competitors.append(self.competitors.pop(0))
                 # return # for now
+            self.profile.competitors = "\r\n".join(self.competitors)
+            self.profile.save()
 
             # use the profile competitors list
             # for each name in competitors list
