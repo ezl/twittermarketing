@@ -52,7 +52,7 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         self.log = logging.getLogger("market")
         profiles = UserProfile.objects.filter(marketing_on=True).order_by("-created")
-        profiles = UserProfile.objects.filter(user__username="rocketlease", marketing_on=True)
+        # profiles = UserProfile.objects.filter(user__username="rocketlease", marketing_on=True)
         print "=" * 70
         print "[ Start marketing ]".center(70)
         print "=" * 70
