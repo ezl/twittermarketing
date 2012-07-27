@@ -52,6 +52,7 @@ class Command(NoArgsCommand):
     def handle_noargs(self, **options):
         self.log = logging.getLogger("market")
         profiles = UserProfile.objects.filter(marketing_on=True).order_by("-created")
+        profiles = UserProfile.objects.filter(user__username="rocketlease", marketing_on=True)
         print "=" * 70
         print "[ Start marketing ]".center(70)
         print "=" * 70
@@ -76,7 +77,7 @@ class Command(NoArgsCommand):
             self.dms = filter(lambda x: bool(x), self.dms)
             self.tweets = filter(lambda x: bool(x), self.tweets)
             self.competitors = filter(lambda x: bool(x), self.competitors)
-            if len(self.queries) == 0 or len(self.dms) == 0 or len(self.tweets) == 0:
+            if (len(self.queries) == 0 and not self.strategy == UserProfile.STEAL) or len(self.dms) == 0 or len(self.tweets) == 0:
                 continue
 
             self.strategy = profile.strategy
@@ -120,7 +121,7 @@ class Command(NoArgsCommand):
         to refollow them and we won't multiple message them."""
 
         self.log.debug("CHECK FOR UNTRACKED FRIENDS")
-        friends_ids_api = self.api.friends_ids()[0]
+        friends_ids_api = self.api.friends_ids()
         targets = Target.objects.filter(hunter=self.user)\
                       .exclude(status__in=Target.ON_DECK)
         friends_ids_django = [t.hunted.twitter_id for t in targets]
@@ -163,7 +164,7 @@ class Command(NoArgsCommand):
         """
 
         self.log.debug("CHECK FOR UNTRACKED FOLLOWERS")
-        followers_ids_api = self.api.followers_ids()[0]
+        followers_ids_api = self.api.followers_ids()
         target = Target.objects.filter(hunter=self.user)\
                      .filter(status=Target.FOLLOWER)
         followers_ids_django = [t.hunted.twitter_id for t in target]
