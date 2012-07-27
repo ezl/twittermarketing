@@ -95,11 +95,12 @@ class Command(NoArgsCommand):
                 # twitter sheets.  we track adds, not deletes.
                 # This takes a long time, we can move it to its own function
                 # later to run daily instead of hourly
+
                 self.add_untracked_friends()
                 self.add_untracked_followers()
 
                 #main work
-                #ADD BACK self.prune_losers()
+                self.prune_losers()
 
                 self.find_new_followers()
                 self.initiate_contact()
@@ -119,7 +120,7 @@ class Command(NoArgsCommand):
         to refollow them and we won't multiple message them."""
 
         self.log.debug("CHECK FOR UNTRACKED FRIENDS")
-        friends_ids_api = self.api.friends_ids()
+        friends_ids_api = self.api.friends_ids()[0]
         targets = Target.objects.filter(hunter=self.user)\
                       .exclude(status__in=Target.ON_DECK)
         friends_ids_django = [t.hunted.twitter_id for t in targets]
@@ -162,7 +163,7 @@ class Command(NoArgsCommand):
         """
 
         self.log.debug("CHECK FOR UNTRACKED FOLLOWERS")
-        followers_ids_api = self.api.followers_ids()
+        followers_ids_api = self.api.followers_ids()[0]
         target = Target.objects.filter(hunter=self.user)\
                      .filter(status=Target.FOLLOWER)
         followers_ids_django = [t.hunted.twitter_id for t in target]
@@ -189,7 +190,7 @@ class Command(NoArgsCommand):
             # Either way the action is the same, follow him
             target.status = Target.FOLLOWER
             target.save()
-            self.log.debug("  => Add follower: %s" % twitter_account.screen_name
+            self.log.debug("  => Add follower: %s" % twitter_account.screen_name)
 
     def prune_losers(self):
         """Unfollow people who are uninterested in following us.
@@ -256,34 +257,36 @@ class Command(NoArgsCommand):
             print self.competitors
             for competitor in self.competitors:
                 try:
-                    competitor_friends_ids = self.api.friends_ids(competitor)
-                    competitor_followers_ids = self.api.followers_ids(competitor)
-                    #to make this easy, we should probably just convert these ids into
-                    #"users" to be followed in the next step.
-                    #these "users" are tweepy users
-                    print competitor_friends_ids
-                    print competitor_followers_ids
+                    competitor_friends_ids = self.api.friends_ids(competitor)[0]
+                    competitor_followers_ids = self.api.followers_ids(competitor)[0]
 
-                    competitor_friends = self.api.lookup_users(competitor_friends_ids)
-                    competitor_followers = self.api.lookup_users(competitor_followers_ids)
-                    assert len(competitor_friends) == len(competitor_friends_ids)
-                    assert len(competitor_followers) == len(competitor_followers_ids)
-                    # i think the api.lookup_users() method may be constrained to 100
-                    # tweepy users per query, not confirmed.
-                    #https://dev.twitter.com/docs/api/1/get/users/lookup makes it seem like
-                except:
+                    if True:
+                        new_competitor_friends_ids = [id for id in competitor_friends_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
+                        old_competitor_friends_ids = [id for id in competitor_friends_ids if len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
+                        new_competitor_followers_ids = [id for id in competitor_followers_ids if not len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
+                        old_competitor_followers_ids = [id for id in competitor_followers_ids if len(TwitterAccount.objects.filter(twitter_id=id)) > 0 ]
+                        print new_competitor_friends_ids
+                        print old_competitor_friends_ids
+                        print new_competitor_followers_ids
+                        print old_competitor_followers_ids
+
+                    new_competitor_friends, remaining_friends = utils.lookup_users_by_id(self.api, new_competitor_friends_ids)
+                    new_competitor_followers, remaining_followers = utils.lookup_users_by_id(self.api, new_competitor_followers_ids)
+
+                except Exception, e:
+                    print e
                     # didn't get all the users, don't remove the competitor
                     # from the competitor list
                     pass
                 else:
                     # got all the competitors friends and followers and converted them
                     # to tweepy users.
-                    users += competitor_friends
-                    users += competitor_followers
+                    users += new_competitor_friends
+                    users += new_competitor_followers
                     # add them to the users list to be processed in the next block (for user in users)
                     # then pop the name off the competitors list in the UserProfile
                     pass
-                return # for now
+                # return # for now
 
             # use the profile competitors list
             # for each name in competitors list
@@ -298,7 +301,10 @@ class Command(NoArgsCommand):
                     screen_name = user.screen_name.lower()
                     match = lambda x: screen_name in \
                         (x.from_user.lower(), x.to_user and x.to_user.lower())
-                    trigger_tweet = filter(match, statuses)[0].text
+                    if not self.strategy == UserProfile.STEAL:
+                        trigger_tweet = filter(match, statuses)[0].text
+                    else:
+                        trigger_tweet = "Steal from user: %s" % user.screen_name # actually this is wrong... i want to write the correct competitor down, but we don't have that information -- we'd have to embed it in the for competitor in self.competitors loop
                 except Exception, e:
                     self.log.exception("Could not get trigger tweet for %s" %
                                        user.screen_name.lower())
@@ -350,7 +356,10 @@ class Command(NoArgsCommand):
         if random.randint(1, 20) == 1: # 1 in 20 are public @replies
             self.tweet_user(target)
         else:
-            self.dm_user(target)
+            try:
+                self.dm_user(target)
+            except:
+                pass
 
     def initiate_contact(self):
         strategy = self.strategy
