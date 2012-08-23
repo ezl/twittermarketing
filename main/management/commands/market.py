@@ -78,7 +78,7 @@ class Command(NoArgsCommand):
             self.dms = filter(lambda x: bool(x), self.dms)
             self.tweets = filter(lambda x: bool(x), self.tweets)
             self.competitors = filter(lambda x: bool(x), self.competitors)
-            if (len(self.queries) == 0 and not self.strategy == UserProfile.STEAL) or len(self.dms) == 0 or len(self.tweets) == 0:
+            if (len(self.queries) == 0 and not self.profile.strategy == UserProfile.STEAL) or len(self.dms) == 0 or len(self.tweets) == 0:
                 continue
 
             self.strategy = profile.strategy
