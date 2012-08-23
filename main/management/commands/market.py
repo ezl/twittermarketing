@@ -219,7 +219,8 @@ class Command(NoArgsCommand):
                 print e
                 return
             finally:
-                self.contact(ingrate)
+                pass
+                #self.contact(ingrate)
 
     def find_new_followers(self):
         """Find new followers and dump them in the db"""
