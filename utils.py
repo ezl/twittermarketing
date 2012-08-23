@@ -1,4 +1,5 @@
 from main.models import TwitterAccount
+from django.db import models
 from django.conf import settings
 import tweepy
 
@@ -20,10 +21,23 @@ def get_or_create_twitter_account(tweepy_user):
     """
     screen_name = tweepy_user.screen_name.lower()
 
+    # Oops! This is a mistake... this should be the SAME. uniqueness of name isn't enforced
+    # at the model level... so this is fucked up somehow.
+    # putting a bandaid on this in this method because the get() screws up if multiple objects
+    # are returned, but one day...
+    # In [9]: TwitterAccount.objects.all().count()
+    # Out[9]: 1332484
+    # In [10]: TwitterAccount.objects.all().distinct().count()
+    # Out[10]: 1332490
+
     # get the account, or create it if we don't know this person
-    twitter_account, created = TwitterAccount.objects.get_or_create(
-        screen_name = screen_name
-        )
+    try:
+        twitter_account, created = TwitterAccount.objects.get_or_create(
+            screen_name = screen_name
+            )
+    except TwitterAccount.MultipleObjectsReturned:
+        twitter_account = TwitterAccount.objects.filter(screen_name=screen_name).order_by("created")[0]
+        created = False
     # if its freshly created, add more info and save it
     if created:
         twitter_account.name          = tweepy_user.name
