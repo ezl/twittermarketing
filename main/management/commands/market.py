@@ -102,7 +102,7 @@ class Command(NoArgsCommand):
                 self.add_untracked_followers()
 
                 #main work
-                # self.prune_losers()
+                self.prune_losers()
 
                 # import pdb; pdb.set_trace()
                 candidates = Target.objects.filter(hunter=self.user,
