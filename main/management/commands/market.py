@@ -104,8 +104,23 @@ class Command(NoArgsCommand):
                 #main work
                 self.prune_losers()
 
-                self.find_new_followers()
-                self.initiate_contact()
+                # import pdb; pdb.set_trace()
+                candidates = Target.objects.filter(hunter=self.user,
+                                                   status=Target.ON_DECK)
+
+                # don't look for new candidates unless we have less than 2000 on deck
+                # 30k at time of writing...
+                print "on deck count:", candidates.count()
+                if candidates.count() < 2000:
+                    self.find_new_followers()
+
+                # don't try to make contact if we already
+                # have $follow_limit people (follow limits are
+                # 2000 by default)
+                FOLLOW_LIMIT = 2000
+                print "friend count:", self.api.me().friends_count
+                if self.api.me().friends_count < FOLLOW_LIMIT:
+                    self.initiate_contact()
 
                 print "DONE with %s" % self.me.screen_name
                 print
@@ -133,14 +148,19 @@ class Command(NoArgsCommand):
         untracked_friends, remainder = lookup_users_by_id(self.api,
                                                           untracked_friends_ids)
         for untracked_friend in untracked_friends:
+            """These could be people who don't follow us, but we want to follow,
+               for example to keep up with news of their company"""
             twitter_account, created = utils.get_or_create_twitter_account(
                                            untracked_friend)
             target, created = Target.objects.get_or_create(
                                   hunter=self.user, hunted=twitter_account)
-            target.reason = "External add."
-            target.status = Target.FOLLOWER
-            target.save()
-            self.log.debug("  => add friend: %s" % twitter_account.screen_name)
+            if created:
+                target.reason = "External add."
+                target.status = Target.FOLLOWER
+                target.save()
+                self.log.debug("  => add friend: %s" % twitter_account.screen_name)
+            else:
+                self.log.debug("  => we're following, but no reciprocation: %s" % twitter_account.screen_name)
 
     def add_untracked_followers(self):
         """Add previously untracked users.
@@ -357,6 +377,13 @@ class Command(NoArgsCommand):
     def follow_user(self, target):
         """This is one of 2 possible actions we can take. We're either
         interested in following people or tweeting people."""
+        # import pdb; pdb.set_trace()
+        try:
+            if self.api.me().friend_count > 1990:
+                return
+        except Exception:
+            return
+
         try:
             self.api.create_friendship(target.hunted.screen_name)
             self.log.debug("Followed: %s" % target.hunted.screen_name)
@@ -406,13 +433,17 @@ class Command(NoArgsCommand):
                        candidates.count())
 
         for target in candidates:
+            self.log.debug("%s" % target)
             try:
                 if (strategy == UserProfile.FOLLOW or
                     strategy == UserProfile.STEAL):
                     self.follow_user(target)
+                    self.log.debug("followed %s" % target)
                 elif strategy == UserProfile.TWEET:
                     self.follow_user(target)
+                    self.log.debug("followed %s (TWEET block)" % target)
                 else:
+                    self.log.debug(strategy)
                     pass
             except Exception, e:
                 print e # probably the rate limit
