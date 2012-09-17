@@ -102,7 +102,7 @@ class Command(NoArgsCommand):
                 self.add_untracked_followers()
 
                 #main work
-                self.prune_losers()
+                # self.prune_losers()
 
                 # import pdb; pdb.set_trace()
                 candidates = Target.objects.filter(hunter=self.user,
@@ -377,11 +377,12 @@ class Command(NoArgsCommand):
     def follow_user(self, target):
         """This is one of 2 possible actions we can take. We're either
         interested in following people or tweeting people."""
-        # import pdb; pdb.set_trace()
         try:
-            if self.api.me().friend_count > 1990:
+            if self.api.me().friends_count > 1990:
                 return
-        except Exception:
+        except Exception, e:
+            print e
+            import pdb; pdb.set_trace()
             return
 
         try:
