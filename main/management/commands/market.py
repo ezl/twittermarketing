@@ -382,7 +382,11 @@ class Command(NoArgsCommand):
                 return
         except Exception, e:
             print e
-            import pdb; pdb.set_trace()
+
+            "Rate limit exceeded. Clients may not make more than 350 requests per hour."
+            if "Clients" in str(e):
+                continue
+            # import pdb; pdb.set_trace()
             return
 
         try:
